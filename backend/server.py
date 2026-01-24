@@ -30,6 +30,9 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'vakildesk-secret-key-change-in-produc
 JWT_ALGORITHM = 'HS256'
 WEBHOOK_URL = os.environ.get('WEBHOOK_URL', 'https://hook.us1.make.com/your-webhook-endpoint-here')
 
+# Health check flag
+db_connected = False
+
 # ============= MODELS =============
 
 class OTPRequest(BaseModel):
