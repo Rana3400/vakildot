@@ -783,10 +783,17 @@ async def get_upcoming_reminders(current_lawyer = Depends(get_current_lawyer)):
         }
     }, {"_id": 0}).to_list(1000)
     
+    # Optimize: Fetch all relevant clients in one query to avoid N+1 problem
+    client_ids = [case['client_id'] for case in upcoming_cases]
+    if not client_ids:
+        return {"success": True, "count": 0, "reminders": []}
+    
+    clients_cursor = db.clients.find({"id": {"$in": client_ids}}, {"_id": 0})
+    clients_dict = {client['id']: client async for client in clients_cursor}
+    
     reminders = []
     for case in upcoming_cases:
-        # Get client details
-        client = await db.clients.find_one({"id": case['client_id']}, {"_id": 0})
+        client = clients_dict.get(case['client_id'])
         if client:
             reminders.append({
                 "case_id": case['id'],
