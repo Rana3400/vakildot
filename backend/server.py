@@ -24,6 +24,25 @@ db = client[os.environ['DB_NAME']]
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
+
+# Health check endpoint for Kubernetes (must be at root, not under /api)
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Kubernetes liveness and readiness probes"""
+    return {
+        "status": "healthy",
+        "service": "vakildesk-backend",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "service": "VakilDesk API",
+        "version": "1.0.0",
+        "status": "running"
+    }
 security = HTTPBearer()
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'vakildesk-secret-key-change-in-production')
