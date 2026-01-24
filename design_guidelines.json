@@ -1,0 +1,196 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "VakilDesk",
+      "metaphor": "The Digital Munshi",
+      "core_values": ["Authority", "Clarity", "Trust", "Efficiency"],
+      "aesthetic": "Swiss High-Contrast meets Indian Legal Heritage"
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Playfair Display, serif",
+        "body": "Inter, sans-serif",
+        "data": "JetBrains Mono, monospace"
+      },
+      "scale": {
+        "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+        "h2": "text-3xl font-semibold tracking-tight",
+        "h3": "text-2xl font-medium",
+        "body_lg": "text-lg leading-relaxed",
+        "body_base": "text-base leading-relaxed",
+        "caption": "text-sm text-muted-foreground uppercase tracking-wider"
+      },
+      "weights": {
+        "regular": "400",
+        "medium": "500",
+        "bold": "700",
+        "black": "900"
+      }
+    },
+    "colors": {
+      "palette": {
+        "background": "#FDFBF7",
+        "foreground": "#1C1917",
+        "card": "#FFFFFF",
+        "card_foreground": "#1C1917",
+        "popover": "#FFFFFF",
+        "popover_foreground": "#1C1917",
+        "primary": "#1C1917",
+        "primary_foreground": "#FDFBF7",
+        "secondary": "#E7E5E4",
+        "secondary_foreground": "#1C1917",
+        "muted": "#F5F5F4",
+        "muted_foreground": "#78716C",
+        "accent": "#F5F5F4",
+        "accent_foreground": "#1C1917",
+        "destructive": "#B91C1C",
+        "destructive_foreground": "#FDFBF7",
+        "border": "#E7E5E4",
+        "input": "#E7E5E4",
+        "ring": "#1C1917",
+        "chart_1": "#1C1917",
+        "chart_2": "#B91C1C",
+        "chart_3": "#D97706",
+        "chart_4": "#4B5563",
+        "chart_5": "#9CA3AF"
+      },
+      "semantic": {
+        "tarikh_urgent": "#B91C1C",
+        "tarikh_upcoming": "#D97706",
+        "tarikh_distant": "#1C1917",
+        "success": "#15803D",
+        "sidebar_bg": "#1C1917",
+        "sidebar_fg": "#FDFBF7",
+        "sidebar_active": "#333333"
+      }
+    },
+    "spacing": {
+      "container_padding": "p-6 md:p-8 lg:p-12",
+      "section_gap": "gap-8 md:gap-12",
+      "item_gap": "gap-4",
+      "radius": "rounded-sm"
+    },
+    "shadows": {
+      "card": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+      "hover": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+      "sticky": "0 4px 6px -1px rgb(0 0 0 / 0.1)"
+    },
+    "borders": {
+      "default": "border border-border",
+      "active": "border-l-4 border-l-primary"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-sm font-medium transition-all active:scale-95",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 rounded-sm font-medium transition-all active:scale-95",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 rounded-sm font-medium transition-all active:scale-95",
+      "ghost": "hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 rounded-sm font-medium transition-all active:scale-95",
+      "destructive": "bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-4 py-2 rounded-sm font-medium transition-all active:scale-95"
+    },
+    "cards": {
+      "base": "rounded-sm border bg-card text-card-foreground shadow-sm",
+      "header": "flex flex-col space-y-1.5 p-6",
+      "title": "text-2xl font-semibold leading-none tracking-tight font-serif",
+      "content": "p-6 pt-0"
+    },
+    "inputs": {
+      "base": "flex h-10 w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "layout": {
+      "dashboard_grid": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "sidebar": "hidden md:flex h-screen w-64 flex-col fixed left-0 top-0 bg-primary text-primary-foreground border-r",
+      "main_content": "md:pl-64 min-h-screen bg-background"
+    }
+  },
+  "assets": {
+    "images": {
+      "login_bg": {
+        "url": "https://images.pexels.com/photos/17843099/pexels-photo-17843099.jpeg",
+        "alt": "Supreme Court of India Architecture",
+        "usage": "Full height background for Login/Signup pages with overlay"
+      },
+      "hero_lawyer": {
+        "url": "https://images.unsplash.com/photo-1742981365880-698cfb84492d",
+        "alt": "Indian Advocate at Desk",
+        "usage": "Hero section of Landing Page"
+      },
+      "documents_feature": {
+        "url": "https://images.pexels.com/photos/8382613/pexels-photo-8382613.jpeg",
+        "alt": "Organized Legal Documents",
+        "usage": "Feature section for Document Management"
+      },
+      "logo_placeholder": {
+        "url": "https://via.placeholder.com/150?text=VakilDesk",
+        "alt": "VakilDesk Logo",
+        "usage": "Navbar and Sidebar logo"
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "preferred_set": ["Gavel", "Scale", "Scroll", "Calendar", "Users", "FileText", "IndianRupee", "Bell", "Search", "Menu"]
+    }
+  },
+  "pages": {
+    "landing": {
+      "structure": [
+        "Hero Section (Headline + CTA + Lawyer Image)",
+        "Features Grid (Case Management, Tarikh Reminders, Billing)",
+        "Trust Section (Bar Council Verification mention)",
+        "Footer"
+      ],
+      "style": "Marketing - High Contrast, Serif Headings, Large Imagery"
+    },
+    "dashboard": {
+      "structure": [
+        "Stats Row (Total Cases, Today's Hearings, Pending Invoices)",
+        "Today's Cause List (Table of hearings)",
+        "Recent Activity Feed"
+      ],
+      "style": "Dense, Data-heavy, Clean Sans-serif for tables"
+    },
+    "cases": {
+      "view": "Table/List view with filters (Court, Stage, Date)",
+      "detail": "Tabbed interface: Overview, History, Documents, Client Info"
+    }
+  },
+  "universal_guidelines": {
+    "general": [
+      "Use 'Playfair Display' for all H1-H3 headings to establish authority.",
+      "Use 'Inter' for all body text and UI elements for maximum readability.",
+      "Use 'JetBrains Mono' for Case Numbers, FIR Numbers, and Dates.",
+      "Primary Action buttons must be sharp (rounded-sm) and high contrast (Black/White).",
+      "All dates MUST be formatted as 'dd/MM/yyyy' (Indian standard).",
+      "Use 'sonner' for all toast notifications.",
+      "Ensure all interactive elements have 'data-testid' attributes.",
+      "Do NOT use gradients. Use solid colors and subtle textures.",
+      "Input fields should have a distinct border color on focus."
+    ],
+    "accessibility": [
+      "Ensure 4.5:1 contrast ratio for text.",
+      "Focus states must be clearly visible (ring-2).",
+      "Use semantic HTML (main, section, article, aside)."
+    ],
+    "motion": [
+      "Use subtle transitions (duration-200) for hover states.",
+      "Avoid large sweeping animations; keep it professional and snappy.",
+      "Use 'framer-motion' for simple list entrance animations if needed."
+    ]
+  },
+  "instructions_to_main_agent": {
+    "setup": [
+      "Install 'lucide-react' for icons.",
+      "Install 'sonner' for toasts.",
+      "Install 'date-fns' for date manipulation.",
+      "Install 'clsx' and 'tailwind-merge' for class utility.",
+      "Configure Tailwind theme to match the 'colors' section exactly.",
+      "Add 'Playfair Display' and 'Inter' via Google Fonts in index.html or CSS."
+    ],
+    "implementation": [
+      "Start with the Layout component (Sidebar + Header).",
+      "Build the Dashboard page first as it's the core value prop.",
+      "Ensure the 'Tarikh' (Hearing Date) is the most prominent element in Case cards.",
+      "Mock the SMS/WhatsApp integration with simple console logs or toast notifications."
+    ]
+  }
+}
