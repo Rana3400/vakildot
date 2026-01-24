@@ -1,0 +1,129 @@
+{
+  "timestamp": "2026-01-24T13:35:58.036914",
+  "total_tests": 24,
+  "passed_tests": 24,
+  "failed_tests": 0,
+  "success_rate": 100.0,
+  "test_details": [
+    {
+      "test_name": "Send OTP",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Verify OTP (New User)",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Register Lawyer",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get Lawyer Profile",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Update Lawyer Profile",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Create Client",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get All Clients",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get Specific Client",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Update Client",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Create Case",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get All Cases",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get Specific Case",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get Case Timeline",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Add Timeline Entry",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Create Invoice",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get All Invoices",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Update Invoice Status",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get Dashboard Stats",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get Recent Activity",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get Hearings",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get Holidays",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Send Reminder",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Upload Document",
+      "success": true,
+      "details": ""
+    },
+    {
+      "test_name": "Get Documents",
+      "success": true,
+      "details": ""
+    }
+  ]
+}
