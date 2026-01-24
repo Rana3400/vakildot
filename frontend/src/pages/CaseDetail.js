@@ -14,7 +14,7 @@ const API = `${BACKEND_URL}/api`;
 const CaseDetail = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
-  const [caseData, setCase Data] = useState(null);
+  const [caseData, setCaseData] = useState(null);
   const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem('vakildesk_token');
