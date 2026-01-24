@@ -184,6 +184,15 @@ class DashboardStats(BaseModel):
     pending_invoices: int
     total_revenue: float
 
+class NotificationRequest(BaseModel):
+    client_name: str
+    client_phone: str
+    hearing_date: str
+    case_description: str
+    notification_type: str  # whatsapp, sms, voice
+    case_number: Optional[str] = None
+    court_name: Optional[str] = None
+
 # ============= AUTH HELPERS =============
 
 OTP_STORAGE = {}  # In production, use Redis
