@@ -46,37 +46,92 @@ const ClientDetail = () => {
 
   const handleWhatsAppReminder = async () => {
     try {
-      toast.info(`[MOCK WHATSAPP] Sending WhatsApp reminder to ${client.name} at ${client.mobile}`);
-      // In production, this would call the actual WhatsApp API
-      setTimeout(() => {
+      // Get the most recent case for context
+      const recentCase = clientCases.length > 0 ? clientCases[0] : null;
+      
+      const payload = {
+        client_name: client.name,
+        client_phone: client.mobile,
+        hearing_date: recentCase?.next_hearing_date || 'No upcoming hearing',
+        case_description: recentCase?.case_description || `General reminder for ${client.name}`,
+        notification_type: 'whatsapp',
+        case_number: recentCase?.case_number || null,
+        court_name: recentCase?.court_name || null
+      };
+
+      toast.info(`Sending WhatsApp reminder to ${client.name}...`);
+      
+      const response = await axios.post(`${API}/notifications/send-webhook`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
         toast.success('WhatsApp reminder sent successfully!');
-      }, 1000);
+        console.log('Webhook response:', response.data.webhook_response);
+      }
     } catch (error) {
-      toast.error('Failed to send WhatsApp reminder');
+      console.error('WhatsApp error:', error);
+      toast.error(error.response?.data?.detail || 'Failed to send WhatsApp reminder');
     }
   };
 
   const handleSMSAlert = async () => {
     try {
-      toast.info(`[MOCK SMS] Sending SMS alert to ${client.name} at ${client.mobile}`);
-      // In production, this would call the actual SMS API
-      setTimeout(() => {
+      const recentCase = clientCases.length > 0 ? clientCases[0] : null;
+      
+      const payload = {
+        client_name: client.name,
+        client_phone: client.mobile,
+        hearing_date: recentCase?.next_hearing_date || 'No upcoming hearing',
+        case_description: recentCase?.case_description || `General alert for ${client.name}`,
+        notification_type: 'sms',
+        case_number: recentCase?.case_number || null,
+        court_name: recentCase?.court_name || null
+      };
+
+      toast.info(`Sending SMS alert to ${client.name}...`);
+      
+      const response = await axios.post(`${API}/notifications/send-webhook`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
         toast.success('SMS alert sent successfully!');
-      }, 1000);
+        console.log('Webhook response:', response.data.webhook_response);
+      }
     } catch (error) {
-      toast.error('Failed to send SMS alert');
+      console.error('SMS error:', error);
+      toast.error(error.response?.data?.detail || 'Failed to send SMS alert');
     }
   };
 
   const handleVoiceCall = async () => {
     try {
-      toast.info(`[MOCK VOICE CALL] Initiating AI voice call to ${client.name} at ${client.mobile}`);
-      // In production, this would call the actual voice call API
-      setTimeout(() => {
+      const recentCase = clientCases.length > 0 ? clientCases[0] : null;
+      
+      const payload = {
+        client_name: client.name,
+        client_phone: client.mobile,
+        hearing_date: recentCase?.next_hearing_date || 'No upcoming hearing',
+        case_description: recentCase?.case_description || `Voice notification for ${client.name}`,
+        notification_type: 'voice',
+        case_number: recentCase?.case_number || null,
+        court_name: recentCase?.court_name || null
+      };
+
+      toast.info(`Initiating AI voice call to ${client.name}...`);
+      
+      const response = await axios.post(`${API}/notifications/send-webhook`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
         toast.success('AI voice call triggered successfully!');
-      }, 1500);
+        console.log('Webhook response:', response.data.webhook_response);
+      }
     } catch (error) {
-      toast.error('Failed to trigger voice call');
+      console.error('Voice call error:', error);
+      toast.error(error.response?.data?.detail || 'Failed to trigger voice call');
     }
   };
 
