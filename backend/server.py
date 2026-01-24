@@ -659,6 +659,178 @@ async def send_reminder(case_id: str, current_lawyer = Depends(get_current_lawye
     
     return {"success": True, "messages": messages}
 
+# ============= WEBHOOK NOTIFICATION =============
+
+async def send_webhook_notification(payload: dict):
+    """Send notification data to external webhook (Make.com, Zapier, etc.)"""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(WEBHOOK_URL, json=payload)
+            response.raise_for_status()
+            return {"success": True, "status_code": response.status_code, "response": response.text}
+    except httpx.HTTPError as e:
+        logger.error(f"Webhook error: {str(e)}")
+        return {"success": False, "error": str(e)}
+    except Exception as e:
+        logger.error(f"Unexpected error sending webhook: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/notifications/send-webhook")
+async def send_notification_webhook(notification: NotificationRequest, current_lawyer = Depends(get_current_lawyer)):
+    """
+    Send notification via external webhook (Make.com, Zapier, etc.)
+    This endpoint can be used for:
+    1. Manual notifications from Communication Hub
+    2. Automated reminders triggered by scheduled jobs
+    """
+    
+    # Prepare payload for webhook
+    payload = {
+        "client_name": notification.client_name,
+        "client_phone": notification.client_phone,
+        "hearing_date": notification.hearing_date,
+        "case_description": notification.case_description,
+        "notification_type": notification.notification_type,
+        "case_number": notification.case_number,
+        "court_name": notification.court_name,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "lawyer_name": current_lawyer.get('name'),
+        "lawyer_mobile": current_lawyer.get('mobile')
+    }
+    
+    # Send to webhook
+    result = await send_webhook_notification(payload)
+    
+    if result['success']:
+        # Log the notification in database
+        notification_log = {
+            'id': str(uuid.uuid4()),
+            'lawyer_id': current_lawyer['id'],
+            'client_phone': notification.client_phone,
+            'notification_type': notification.notification_type,
+            'payload': payload,
+            'status': 'sent',
+            'sent_at': datetime.now(timezone.utc).isoformat()
+        }
+        await db.notification_logs.insert_one(notification_log)
+        
+        return {
+            "success": True,
+            "message": f"{notification.notification_type.upper()} notification sent successfully",
+            "webhook_response": result
+        }
+    else:
+        # Log failed notification
+        notification_log = {
+            'id': str(uuid.uuid4()),
+            'lawyer_id': current_lawyer['id'],
+            'client_phone': notification.client_phone,
+            'notification_type': notification.notification_type,
+            'payload': payload,
+            'status': 'failed',
+            'error': result.get('error'),
+            'sent_at': datetime.now(timezone.utc).isoformat()
+        }
+        await db.notification_logs.insert_one(notification_log)
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to send notification: {result.get('error', 'Unknown error')}"
+        )
+
+@api_router.get("/notifications/upcoming-reminders")
+async def get_upcoming_reminders(current_lawyer = Depends(get_current_lawyer)):
+    """
+    Get cases that need reminders in the next 24 hours
+    This endpoint can be called by a scheduled job (cron) to send automatic reminders
+    """
+    
+    # Calculate time range: today to tomorrow
+    today = datetime.now(timezone.utc)
+    tomorrow = today + timedelta(days=1)
+    today_str = today.date().isoformat()
+    tomorrow_str = tomorrow.date().isoformat()
+    
+    # Find cases with hearings in the next 24 hours
+    upcoming_cases = await db.cases.find({
+        "lawyer_id": current_lawyer['id'],
+        "reminder_enabled": True,
+        "next_hearing_date": {
+            "$gte": today_str,
+            "$lte": tomorrow_str
+        }
+    }, {"_id": 0}).to_list(1000)
+    
+    reminders = []
+    for case in upcoming_cases:
+        # Get client details
+        client = await db.clients.find_one({"id": case['client_id']}, {"_id": 0})
+        if client:
+            reminders.append({
+                "case_id": case['id'],
+                "case_number": case['case_number'],
+                "client_name": client['name'],
+                "client_phone": client['mobile'],
+                "hearing_date": case['next_hearing_date'],
+                "case_description": case.get('case_description', ''),
+                "court_name": case['court_name'],
+                "reminder_types": case['reminder_types']
+            })
+    
+    return {
+        "success": True,
+        "count": len(reminders),
+        "reminders": reminders
+    }
+
+@api_router.post("/notifications/trigger-auto-reminders")
+async def trigger_auto_reminders(current_lawyer = Depends(get_current_lawyer)):
+    """
+    Trigger automatic reminders for upcoming hearings
+    This should be called by a scheduled job (cron) daily
+    """
+    
+    # Get upcoming reminders
+    reminders_response = await get_upcoming_reminders(current_lawyer)
+    reminders = reminders_response['reminders']
+    
+    results = []
+    for reminder in reminders:
+        # Send notification for each reminder type
+        for notification_type in reminder['reminder_types']:
+            notification = NotificationRequest(
+                client_name=reminder['client_name'],
+                client_phone=reminder['client_phone'],
+                hearing_date=reminder['hearing_date'],
+                case_description=reminder['case_description'],
+                notification_type=notification_type,
+                case_number=reminder['case_number'],
+                court_name=reminder['court_name']
+            )
+            
+            try:
+                result = await send_notification_webhook(notification, current_lawyer)
+                results.append({
+                    "case_number": reminder['case_number'],
+                    "notification_type": notification_type,
+                    "status": "sent",
+                    "result": result
+                })
+            except Exception as e:
+                results.append({
+                    "case_number": reminder['case_number'],
+                    "notification_type": notification_type,
+                    "status": "failed",
+                    "error": str(e)
+                })
+    
+    return {
+        "success": True,
+        "total_reminders": len(reminders),
+        "total_notifications_sent": len(results),
+        "results": results
+    }
+
 # ============= INCLUDE ROUTER =============
 
 app.include_router(api_router)
