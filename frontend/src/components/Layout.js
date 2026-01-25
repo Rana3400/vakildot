@@ -2,19 +2,24 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Scale, LayoutDashboard, Briefcase, Users, FileText, Calendar, IndianRupee, Settings, Menu, X, LogOut } from 'lucide-react';
 
-const Layout = ({ lawyer, onLogout }) => {
+const Layout = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  const menuItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/cases', icon: Briefcase, label: 'Cases' },
-    { path: '/clients', icon: Users, label: 'Clients' },
-    { path: '/documents', icon: FileText, label: 'Documents' },
-    { path: '/calendar', icon: Calendar, label: 'Calendar' },
-    { path: '/billing', icon: IndianRupee, label: 'Billing' },
-    { path: '/settings', icon: Settings, label: 'Settings' },
+  const userRole = user?.user_role || 'lawyer';
+
+  // Filter menu items based on user role
+  const allMenuItems = [
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['lawyer', 'client'] },
+    { path: '/cases', icon: Briefcase, label: 'Cases', roles: ['lawyer', 'client'] },
+    { path: '/clients', icon: Users, label: 'Clients', roles: ['lawyer'] },
+    { path: '/documents', icon: FileText, label: 'Documents', roles: ['lawyer'] },
+    { path: '/calendar', icon: Calendar, label: 'Calendar', roles: ['lawyer'] },
+    { path: '/billing', icon: IndianRupee, label: 'Billing', roles: ['lawyer'] },
+    { path: '/settings', icon: Settings, label: 'Settings', roles: ['lawyer', 'client'] },
   ];
+
+  const menuItems = allMenuItems.filter(item => item.roles.includes(userRole));
 
   const isActive = (path) => location.pathname.startsWith(path);
 
