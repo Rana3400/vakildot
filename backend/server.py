@@ -422,7 +422,19 @@ async def create_case(case_data: CaseCreate, current_lawyer = Depends(get_curren
 
 @api_router.get("/cases", response_model=List[Case])
 async def get_cases(current_lawyer = Depends(get_current_lawyer)):
-    cases = await db.cases.find({"lawyer_id": current_lawyer['id']}, {"_id": 0}).to_list(1000)
+    # If user is a client, filter cases by their phone number
+    if current_lawyer.get('user_role') == 'client':
+        # Find all clients with this phone number
+        client_records = await db.clients.find({"mobile": current_lawyer['mobile']}, {"_id": 0}).to_list(1000)
+        if not client_records:
+            return []
+        
+        client_ids = [c['id'] for c in client_records]
+        cases = await db.cases.find({"client_id": {"$in": client_ids}}, {"_id": 0}).to_list(1000)
+    else:
+        # Lawyers see all their cases
+        cases = await db.cases.find({"lawyer_id": current_lawyer['id']}, {"_id": 0}).to_list(1000)
+    
     return [Case(**c) for c in cases]
 
 @api_router.get("/cases/{case_id}", response_model=Case)
