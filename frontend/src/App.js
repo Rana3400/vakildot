@@ -3,9 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import '@/index.css';
 
-import Landing from '@/pages/Landing';
+import Welcome from '@/pages/Welcome';
 import Login from '@/pages/Login';
 import Onboarding from '@/pages/Onboarding';
+import ClientOnboarding from '@/pages/ClientOnboarding';
 import Dashboard from '@/pages/Dashboard';
 import Cases from '@/pages/Cases';
 import CaseDetail from '@/pages/CaseDetail';
@@ -19,53 +20,66 @@ import Layout from '@/components/Layout';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('vakildesk_token'));
-  const [lawyer, setLawyer] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     if (token) {
-      const storedLawyer = localStorage.getItem('vakildesk_lawyer');
-      if (storedLawyer) {
-        setLawyer(JSON.parse(storedLawyer));
+      const storedUser = localStorage.getItem('vakildesk_user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
     }
   }, [token]);
 
-  const handleLogin = (newToken, lawyerData) => {
+  const handleLogin = (newToken, userData) => {
     localStorage.setItem('vakildesk_token', newToken);
-    localStorage.setItem('vakildesk_lawyer', JSON.stringify(lawyerData));
+    localStorage.setItem('vakildesk_user', JSON.stringify(userData));
+    // Also keep old key for backward compatibility
+    localStorage.setItem('vakildesk_lawyer', JSON.stringify(userData));
     setToken(newToken);
-    setLawyer(lawyerData);
+    setUser(userData);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('vakildesk_token');
+    localStorage.removeItem('vakildesk_user');
     localStorage.removeItem('vakildesk_lawyer');
     setToken(null);
-    setLawyer(null);
+    setUser(null);
   };
 
   const PrivateRoute = ({ children }) => {
-    return token ? children : <Navigate to="/login" />;
+    return token ? children : <Navigate to="/" />;
   };
+
+  const userRole = user?.user_role || 'lawyer';
 
   return (
     <BrowserRouter>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={token ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />} />
-        <Route path="/onboarding" element={<Onboarding onComplete={handleLogin} />} />
+        <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Welcome />} />
+        <Route path="/login/:userType" element={token ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />} />
+        <Route path="/onboarding/lawyer" element={<Onboarding onComplete={handleLogin} />} />
+        <Route path="/onboarding/client" element={<ClientOnboarding onComplete={handleLogin} />} />
         
-        <Route path="/" element={<PrivateRoute><Layout lawyer={lawyer} onLogout={handleLogout} /></PrivateRoute>}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="cases" element={<Cases />} />
-          <Route path="cases/:caseId" element={<CaseDetail />} />
-          <Route path="clients" element={<Clients />} />
-          <Route path="clients/:clientId" element={<ClientDetail />} />
-          <Route path="documents" element={<Documents />} />
-          <Route path="calendar" element={<Calendar />} />
-          <Route path="billing" element={<Billing />} />
-          <Route path="settings" element={<Settings lawyer={lawyer} />} />
+        <Route path="/" element={<PrivateRoute><Layout user={user} onLogout={handleLogout} /></PrivateRoute>}>
+          <Route path="dashboard" element={<Dashboard userRole={userRole} />} />
+          <Route path="cases" element={<Cases userRole={userRole} />} />
+          <Route path="cases/:caseId" element={<CaseDetail userRole={userRole} />} />
+          
+          {/* Only lawyers can access these routes */}
+          {userRole === 'lawyer' && (
+            <>
+              <Route path="clients" element={<Clients />} />
+              <Route path="clients/:clientId" element={<ClientDetail />} />
+              <Route path="documents" element={<Documents />} />
+              <Route path="calendar" element={<Calendar />} />
+              <Route path="billing" element={<Billing />} />
+            </>
+          )}
+          
+          <Route path="settings" element={<Settings user={user} />} />
         </Route>
       </Routes>
     </BrowserRouter>
