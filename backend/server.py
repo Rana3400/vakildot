@@ -69,6 +69,11 @@ class LawyerRegister(BaseModel):
     practice_areas: List[str]
     courts: List[str]
     role: str = "senior_advocate"  # senior_advocate, junior_advocate, clerk
+    user_role: str = "lawyer"  # lawyer or client
+
+class ClientRegister(BaseModel):
+    mobile: str
+    name: str
 
 class LawyerProfile(BaseModel):
     model_config = ConfigDict(extra="ignore")
