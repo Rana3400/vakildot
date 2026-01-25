@@ -33,10 +33,13 @@ const ClientOnboarding = ({ onComplete }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/auth/send-otp`, { mobile: formData.mobile });
-      toast.success('OTP sent successfully!');
-      toast.info(`Demo OTP: ${response.data.otp}`);
-      setStep(2);
+      const result = await sendOTP(formData.mobile);
+      if (result.success) {
+        toast.success('OTP sent to your mobile number!');
+        setStep(2);
+      } else {
+        toast.error(result.error || 'Failed to send OTP');
+      }
     } catch (error) {
       toast.error('Failed to send OTP');
       console.error(error);
