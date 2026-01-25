@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Cases = () => {
+const Cases = ({ userRole = 'lawyer' }) => {
   const [cases, setCases] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
