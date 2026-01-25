@@ -92,96 +92,80 @@ const ClientOnboarding = ({ onComplete }) => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Client Registration</CardTitle>
+            <CardTitle>Client Sign Up</CardTitle>
             <CardDescription>
-              {step === 1 ? 'Verify your phone number' : 'Complete your profile'}
+              {step === 1 ? 'Create your client account' : 'Verify your phone number'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {step === 1 ? (
-              !otpSent ? (
-                <form onSubmit={handleSendOTP} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="mobile">Mobile Number *</Label>
-                    <Input
-                      id="mobile"
-                      type="tel"
-                      placeholder="10-digit mobile number"
-                      value={mobileNumber}
-                      onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      maxLength={10}
-                      data-testid="client-mobile-input"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Sending...' : 'Send OTP'}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleVerifyOTP} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="otp">Enter OTP *</Label>
-                    <Input
-                      id="otp"
-                      type="text"
-                      placeholder="6-digit OTP"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      maxLength={6}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">OTP sent to +91 {mobileNumber}</p>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Verifying...' : 'Verify OTP'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    className="w-full" 
-                    onClick={() => {
-                      setOtpSent(false);
-                      setOtp('');
-                    }}
-                  >
-                    Change Number
-                  </Button>
-                </form>
-              )
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name *</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    data-testid="client-name-input"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="mobile">Mobile Number *</Label>
+                  <Input
+                    id="mobile"
+                    type="tel"
+                    placeholder="10-digit mobile number"
+                    value={formData.mobile}
+                    onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                    maxLength={10}
+                    data-testid="client-mobile-input"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This number will be used to show your cases
+                  </p>
+                </div>
+
+                <Button type="submit" className="w-full" disabled={loading} data-testid="client-signup-submit">
+                  {loading ? 'Sending OTP...' : 'Sign Up'}
+                </Button>
+              </form>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  data-testid="client-name-input"
-                  required
-                />
-              </div>
+              <form onSubmit={handleVerifyAndRegister} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="otp">Enter OTP *</Label>
+                  <Input
+                    id="otp"
+                    type="text"
+                    placeholder="6-digit OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                    data-testid="client-otp-input"
+                    required
+                    autoFocus
+                  />
+                  <p className="text-xs text-muted-foreground">OTP sent to +91 {formData.mobile}</p>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="mobile-display">Mobile Number</Label>
-                <Input
-                  id="mobile-display"
-                  type="text"
-                  value={mobileNumber}
-                  disabled
-                  className="bg-muted"
-                />
-                <p className="text-xs text-muted-foreground">
-                  This number will be used to show your cases
-                </p>
-              </div>
+                <Button type="submit" className="w-full" disabled={loading} data-testid="client-verify-button">
+                  {loading ? 'Verifying...' : 'Verify & Complete Registration'}
+                </Button>
 
-              <Button type="submit" className="w-full" disabled={loading} data-testid="complete-client-registration-button">
-                {loading ? 'Registering...' : 'Complete Registration'}
-              </Button>
-            </form>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full" 
+                  onClick={() => setStep(1)}
+                  data-testid="client-back-button"
+                >
+                  Back to Edit Details
+                </Button>
+              </form>
             )}
 
             <div className="text-center mt-4">
