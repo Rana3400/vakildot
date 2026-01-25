@@ -351,13 +351,15 @@ const Cases = ({ userRole = 'lawyer' }) => {
           filteredCases.map((caseItem) => (
             <Card 
               key={caseItem.id} 
-              className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => navigate(`/cases/${caseItem.id}`)}
+              className="hover:shadow-md transition-shadow"
               data-testid={`case-card-${caseItem.id}`}
             >
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                  <div 
+                    className="flex-1 cursor-pointer"
+                    onClick={() => navigate(`/cases/${caseItem.id}`)}
+                  >
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-xl font-mono font-semibold text-foreground">{caseItem.case_number}</h3>
                       <span className="px-3 py-1 bg-muted text-foreground text-xs rounded-sm">
@@ -376,6 +378,21 @@ const Cases = ({ userRole = 'lawyer' }) => {
                     {caseItem.reminder_enabled && (
                       <p className="text-xs text-muted-foreground mt-2">Reminders: {caseItem.reminder_types.join(', ')}</p>
                     )}
+                    {userRole === 'lawyer' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCase(caseItem.id);
+                        }}
+                        data-testid={`delete-case-${caseItem.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -384,7 +401,9 @@ const Cases = ({ userRole = 'lawyer' }) => {
         ) : (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No cases found. Create your first case to get started.</p>
+              <p className="text-muted-foreground">
+                {userRole === 'client' ? 'No cases found for your phone number.' : 'No cases found. Create your first case to get started.'}
+              </p>
             </CardContent>
           </Card>
         )}
