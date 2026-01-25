@@ -467,7 +467,7 @@ async def delete_case(case_id: str, current_lawyer = Depends(get_current_lawyer)
     if current_lawyer.get('user_role') != 'lawyer':
         raise HTTPException(status_code=403, detail="Only lawyers can delete cases")
     
-    result = await db.cases.delete_one({" id": case_id, "lawyer_id": current_lawyer['id']})
+    result = await db.cases.delete_one({"id": case_id, "lawyer_id": current_lawyer['id']})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Case not found")
     return {"success": True, "message": "Case deleted"}
