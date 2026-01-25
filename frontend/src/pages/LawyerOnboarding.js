@@ -97,109 +97,90 @@ const LawyerOnboarding = ({ onComplete }) => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Lawyer Registration</CardTitle>
+            <CardTitle>Lawyer Sign Up</CardTitle>
             <CardDescription>
-              {step === 1 ? 'Verify your phone number' : 'Complete your lawyer profile'}
+              {step === 1 ? 'Create your lawyer account' : 'Verify your phone number'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {step === 1 ? (
-              // Step 1: Phone + OTP
-              !otpSent ? (
-                <form onSubmit={handleSendOTP} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="mobile">Mobile Number *</Label>
-                    <Input
-                      id="mobile"
-                      type="tel"
-                      placeholder="10-digit mobile number"
-                      value={mobileNumber}
-                      onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      maxLength={10}
-                      data-testid="mobile-input"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading} data-testid="send-otp-button">
-                    {loading ? 'Sending...' : 'Send OTP'}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleVerifyOTP} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="otp">Enter OTP *</Label>
-                    <Input
-                      id="otp"
-                      type="text"
-                      placeholder="6-digit OTP"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      maxLength={6}
-                      data-testid="otp-input"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">OTP sent to +91 {mobileNumber}</p>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading} data-testid="verify-otp-button">
-                    {loading ? 'Verifying...' : 'Verify OTP'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    className="w-full" 
-                    onClick={() => {
-                      setOtpSent(false);
-                      setOtp('');
-                    }}
-                  >
-                    Change Number
-                  </Button>
-                </form>
-              )
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name *</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    data-testid="lawyer-name-input"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    data-testid="lawyer-email-input"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="mobile">Mobile Number *</Label>
+                  <Input
+                    id="mobile"
+                    type="tel"
+                    placeholder="10-digit mobile number"
+                    value={formData.mobile}
+                    onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                    maxLength={10}
+                    data-testid="lawyer-mobile-input"
+                    required
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={loading} data-testid="lawyer-signup-submit">
+                  {loading ? 'Sending OTP...' : 'Sign Up'}
+                </Button>
+              </form>
             ) : (
-              // Step 2: Registration Form
-              <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  data-testid="name-input"
-                  required
-                />
-              </div>
+              <form onSubmit={handleVerifyAndRegister} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="otp">Enter OTP *</Label>
+                  <Input
+                    id="otp"
+                    type="text"
+                    placeholder="6-digit OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                    data-testid="lawyer-otp-input"
+                    required
+                    autoFocus
+                  />
+                  <p className="text-xs text-muted-foreground">OTP sent to +91 {formData.mobile}</p>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  data-testid="email-input"
-                  required
-                />
-              </div>
+                <Button type="submit" className="w-full" disabled={loading} data-testid="lawyer-verify-button">
+                  {loading ? 'Verifying...' : 'Verify & Complete Registration'}
+                </Button>
 
-              <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile Number</Label>
-                <Input
-                  id="mobile"
-                  type="text"
-                  value={mobileNumber}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading} data-testid="complete-registration-button">
-                {loading ? 'Registering...' : 'Complete Registration'}
-              </Button>
-            </form>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full" 
+                  onClick={() => setStep(1)}
+                  data-testid="lawyer-back-button"
+                >
+                  Back to Edit Details
+                </Button>
+              </form>
             )}
 
             <div className="text-center mt-4">
