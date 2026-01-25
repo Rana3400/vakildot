@@ -59,9 +59,9 @@ function App() {
       <Toaster position="top-right" />
       <Routes>
         <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Welcome />} />
-        <Route path="/login/:userType" element={token ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />} />
-        <Route path="/onboarding/lawyer" element={<LawyerOnboarding onComplete={handleLogin} />} />
-        <Route path="/onboarding/client" element={<ClientOnboarding onComplete={handleLogin} />} />
+        <Route path="/signin" element={token ? <Navigate to="/dashboard" /> : <SignIn onLogin={handleLogin} />} />
+        <Route path="/signup/lawyer" element={token ? <Navigate to="/dashboard" /> : <LawyerOnboarding onComplete={handleLogin} />} />
+        <Route path="/signup/client" element={token ? <Navigate to="/dashboard" /> : <ClientOnboarding onComplete={handleLogin} />} />
         
         <Route path="/" element={<PrivateRoute><Layout user={user} onLogout={handleLogout} /></PrivateRoute>}>
           <Route path="dashboard" element={<Dashboard userRole={userRole} />} />
