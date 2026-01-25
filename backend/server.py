@@ -65,9 +65,9 @@ class LawyerRegister(BaseModel):
     mobile: str
     name: str
     email: EmailStr
-    bar_council_number: str
-    practice_areas: List[str]
-    courts: List[str]
+    bar_council_number: str = ""
+    practice_areas: List[str] = []
+    courts: List[str] = []
     role: str = "senior_advocate"  # senior_advocate, junior_advocate, clerk
     user_role: str = "lawyer"  # lawyer or client
 
