@@ -16,11 +16,64 @@ const ClientOnboarding = ({ onComplete }) => {
   const navigate = useNavigate();
   const mobile = location.state?.mobile || '';
 
+  const [step, setStep] = useState(mobile ? 2 : 1);
+  const [mobileNumber, setMobileNumber] = useState(mobile);
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [formData, setFormData] = useState({
     mobile: mobile,
     name: ''
   });
   const [loading, setLoading] = useState(false);
+
+  const handleSendOTP = async (e) => {
+    e.preventDefault();
+    if (mobileNumber.length !== 10) {
+      toast.error('Please enter valid 10-digit mobile number');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API}/auth/send-otp`, { mobile: mobileNumber });
+      toast.success('OTP sent successfully!');
+      setOtpSent(true);
+      toast.info(`Demo OTP: ${response.data.otp}`);
+    } catch (error) {
+      toast.error('Failed to send OTP');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      toast.error('Please enter 6-digit OTP');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API}/auth/verify-otp`, { mobile: mobileNumber, otp });
+      
+      if (!response.data.is_new) {
+        toast.error('Account already exists. Please sign in instead.');
+        setTimeout(() => navigate('/signin'), 2000);
+        return;
+      }
+
+      setFormData(prev => ({ ...prev, mobile: mobileNumber }));
+      setStep(2);
+      toast.success('Phone verified! Complete your profile.');
+    } catch (error) {
+      toast.error('Invalid OTP. Please try again.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
