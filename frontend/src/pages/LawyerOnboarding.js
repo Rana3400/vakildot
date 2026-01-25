@@ -204,7 +204,7 @@ const LawyerOnboarding = ({ onComplete }) => {
                 <Input
                   id="mobile"
                   type="text"
-                  value={mobile}
+                  value={mobileNumber}
                   disabled
                   className="bg-muted"
                 />
@@ -214,6 +214,7 @@ const LawyerOnboarding = ({ onComplete }) => {
                 {loading ? 'Registering...' : 'Complete Registration'}
               </Button>
             </form>
+            )}
 
             <div className="text-center mt-4">
               <p className="text-sm text-muted-foreground">
