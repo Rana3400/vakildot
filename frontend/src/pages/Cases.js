@@ -330,6 +330,7 @@ const Cases = ({ userRole = 'lawyer' }) => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="flex items-center gap-4">
