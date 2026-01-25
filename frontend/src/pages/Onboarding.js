@@ -92,7 +92,7 @@ const Onboarding = ({ onComplete }) => {
     try {
       const response = await axios.post(`${API}/auth/register`, formData);
       toast.success('Registration successful!');
-      onComplete(response.data.token, response.data.lawyer);
+      onComplete(response.data.token, response.data.user);
       navigate('/dashboard');
     } catch (error) {
       toast.error('Registration failed. Please try again.');
