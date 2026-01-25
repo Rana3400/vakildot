@@ -463,7 +463,11 @@ async def update_case(case_id: str, update_data: dict, current_lawyer = Depends(
 
 @api_router.delete("/cases/{case_id}")
 async def delete_case(case_id: str, current_lawyer = Depends(get_current_lawyer)):
-    result = await db.cases.delete_one({"id": case_id, "lawyer_id": current_lawyer['id']})
+    # Only lawyers can delete cases
+    if current_lawyer.get('user_role') != 'lawyer':
+        raise HTTPException(status_code=403, detail="Only lawyers can delete cases")
+    
+    result = await db.cases.delete_one({" id": case_id, "lawyer_id": current_lawyer['id']})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Case not found")
     return {"success": True, "message": "Case deleted"}
