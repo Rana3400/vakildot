@@ -12,38 +12,35 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const LawyerOnboarding = ({ onComplete }) => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const mobile = location.state?.mobile || '';
 
-  const [step, setStep] = useState(mobile ? 2 : 1); // Step 1: OTP, Step 2: Registration
-  const [mobileNumber, setMobileNumber] = useState(mobile);
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
+  const [step, setStep] = useState(1); // Step 1: Form, Step 2: OTP
   const [formData, setFormData] = useState({
-    mobile: mobile,
     name: '',
     email: '',
+    mobile: '',
     bar_council_number: '',
     practice_areas: [],
     courts: [],
     role: 'senior_advocate'
   });
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSendOTP = async (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (mobileNumber.length !== 10) {
+    
+    if (formData.mobile.length !== 10) {
       toast.error('Please enter valid 10-digit mobile number');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/auth/send-otp`, { mobile: mobileNumber });
+      const response = await axios.post(`${API}/auth/send-otp`, { mobile: formData.mobile });
       toast.success('OTP sent successfully!');
-      setOtpSent(true);
       toast.info(`Demo OTP: ${response.data.otp}`);
+      setStep(2);
     } catch (error) {
       toast.error('Failed to send OTP');
       console.error(error);
@@ -52,8 +49,9 @@ const LawyerOnboarding = ({ onComplete }) => {
     }
   };
 
-  const handleVerifyOTP = async (e) => {
+  const handleVerifyAndRegister = async (e) => {
     e.preventDefault();
+    
     if (otp.length !== 6) {
       toast.error('Please enter 6-digit OTP');
       return;
@@ -61,37 +59,25 @@ const LawyerOnboarding = ({ onComplete }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/auth/verify-otp`, { mobile: mobileNumber, otp });
+      // First verify OTP
+      const verifyResponse = await axios.post(`${API}/auth/verify-otp`, { 
+        mobile: formData.mobile, 
+        otp 
+      });
       
-      if (!response.data.is_new) {
+      if (!verifyResponse.data.is_new) {
         toast.error('Account already exists. Please sign in instead.');
         setTimeout(() => navigate('/signin'), 2000);
         return;
       }
 
-      // New user - proceed to registration
-      setFormData(prev => ({ ...prev, mobile: mobileNumber }));
-      setStep(2);
-      toast.success('Phone verified! Complete your profile.');
-    } catch (error) {
-      toast.error('Invalid OTP. Please try again.');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    setLoading(true);
-    try {
+      // Then register
       const response = await axios.post(`${API}/auth/register`, formData);
       toast.success('Registration successful!');
       onComplete(response.data.token, response.data.user);
       navigate('/dashboard');
     } catch (error) {
-      toast.error('Registration failed. Please try again.');
+      toast.error(error.response?.data?.detail || 'Registration failed. Please try again.');
       console.error(error);
     } finally {
       setLoading(false);
