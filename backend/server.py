@@ -85,6 +85,7 @@ class LawyerProfile(BaseModel):
     practice_areas: List[str]
     courts: List[str]
     role: str
+    user_role: str
     created_at: str
 
 class ClientCreate(BaseModel):
