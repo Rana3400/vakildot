@@ -5,7 +5,7 @@ import '@/index.css';
 
 import Welcome from '@/pages/Welcome';
 import Login from '@/pages/Login';
-import Onboarding from '@/pages/Onboarding';
+import LawyerOnboarding from '@/pages/LawyerOnboarding';
 import ClientOnboarding from '@/pages/ClientOnboarding';
 import Dashboard from '@/pages/Dashboard';
 import Cases from '@/pages/Cases';
