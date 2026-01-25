@@ -90,6 +90,19 @@ const ClientOnboarding = ({ onComplete }) => {
                 {loading ? 'Registering...' : 'Complete Registration'}
               </Button>
             </form>
+
+            <div className="text-center mt-4">
+              <p className="text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <button
+                  onClick={() => navigate('/signin')}
+                  className="text-primary hover:underline font-medium"
+                  data-testid="goto-signin-link"
+                >
+                  Login here
+                </button>
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
