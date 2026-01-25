@@ -60,7 +60,7 @@ function App() {
       <Routes>
         <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Welcome />} />
         <Route path="/login/:userType" element={token ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />} />
-        <Route path="/onboarding/lawyer" element={<Onboarding onComplete={handleLogin} />} />
+        <Route path="/onboarding/lawyer" element={<LawyerOnboarding onComplete={handleLogin} />} />
         <Route path="/onboarding/client" element={<ClientOnboarding onComplete={handleLogin} />} />
         
         <Route path="/" element={<PrivateRoute><Layout user={user} onLogout={handleLogout} /></PrivateRoute>}>
