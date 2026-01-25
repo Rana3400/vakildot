@@ -269,12 +269,12 @@ async def verify_otp(request: OTPVerify):
     if not stored_otp or stored_otp != request.otp:
         raise HTTPException(status_code=400, detail="Invalid OTP")
     
-    # Check if lawyer exists
-    lawyer = await db.lawyers.find_one({"mobile": request.mobile}, {"_id": 0})
+    # Check if user exists (lawyer or client)
+    user = await db.lawyers.find_one({"mobile": request.mobile}, {"_id": 0})
     
-    if lawyer:
-        token = create_token(lawyer['id'])
-        return {"success": True, "token": token, "lawyer": lawyer, "is_new": False}
+    if user:
+        token = create_token(user['id'])
+        return {"success": True, "token": token, "user": user, "is_new": False}
     else:
         return {"success": True, "is_new": True, "mobile": request.mobile}
 
