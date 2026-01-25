@@ -58,19 +58,23 @@ const ClientOnboarding = ({ onComplete }) => {
 
     setLoading(true);
     try {
-      // First verify OTP
-      const verifyResponse = await axios.post(`${API}/auth/verify-otp`, { 
-        mobile: formData.mobile, 
-        otp 
+      const verifyResult = await verifyOTP(otp);
+      if (!verifyResult.success) {
+        toast.error(verifyResult.error || 'Invalid OTP');
+        setLoading(false);
+        return;
+      }
+
+      const checkResponse = await axios.post(`${API}/auth/check-existing`, { 
+        mobile: formData.mobile 
       });
       
-      if (!verifyResponse.data.is_new) {
+      if (checkResponse.data.exists) {
         toast.error('Account already exists. Please sign in instead.');
         setTimeout(() => navigate('/signin'), 2000);
         return;
       }
 
-      // Then register
       const response = await axios.post(`${API}/auth/register-client`, formData);
       toast.success('Registration successful!');
       onComplete(response.data.token, response.data.user);
