@@ -38,10 +38,14 @@ const LawyerOnboarding = ({ onComplete }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/auth/send-otp`, { mobile: formData.mobile });
-      toast.success('OTP sent successfully!');
-      toast.info(`Demo OTP: ${response.data.otp}`);
-      setStep(2);
+      // Send OTP via Firebase
+      const result = await sendOTP(formData.mobile);
+      if (result.success) {
+        toast.success('OTP sent to your mobile number!');
+        setStep(2);
+      } else {
+        toast.error(result.error || 'Failed to send OTP');
+      }
     } catch (error) {
       toast.error('Failed to send OTP');
       console.error(error);
@@ -60,19 +64,26 @@ const LawyerOnboarding = ({ onComplete }) => {
 
     setLoading(true);
     try {
-      // First verify OTP
-      const verifyResponse = await axios.post(`${API}/auth/verify-otp`, { 
-        mobile: formData.mobile, 
-        otp 
+      // Verify OTP via Firebase
+      const verifyResult = await verifyOTP(otp);
+      if (!verifyResult.success) {
+        toast.error(verifyResult.error || 'Invalid OTP');
+        setLoading(false);
+        return;
+      }
+
+      // Check if user already exists in MongoDB
+      const checkResponse = await axios.post(`${API}/auth/check-existing`, { 
+        mobile: formData.mobile 
       });
       
-      if (!verifyResponse.data.is_new) {
+      if (checkResponse.data.exists) {
         toast.error('Account already exists. Please sign in instead.');
         setTimeout(() => navigate('/signin'), 2000);
         return;
       }
 
-      // Then register
+      // Register new user in MongoDB (Firestore not used for user data)
       const response = await axios.post(`${API}/auth/register`, formData);
       toast.success('Registration successful!');
       onComplete(response.data.token, response.data.user);
