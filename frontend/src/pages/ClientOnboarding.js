@@ -178,11 +178,11 @@ const ClientOnboarding = ({ onComplete }) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile Number</Label>
+                <Label htmlFor="mobile-display">Mobile Number</Label>
                 <Input
-                  id="mobile"
+                  id="mobile-display"
                   type="text"
-                  value={mobile}
+                  value={mobileNumber}
                   disabled
                   className="bg-muted"
                 />
@@ -195,6 +195,7 @@ const ClientOnboarding = ({ onComplete }) => {
                 {loading ? 'Registering...' : 'Complete Registration'}
               </Button>
             </form>
+            )}
 
             <div className="text-center mt-4">
               <p className="text-sm text-muted-foreground">
