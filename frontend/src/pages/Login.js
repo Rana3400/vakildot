@@ -123,7 +123,7 @@ const Login = ({ onLogin }) => {
           <CardHeader>
             <CardTitle>{isLawyer ? 'Lawyer Login' : 'Client Login'}</CardTitle>
             <CardDescription>
-              Enter your registered mobile number to receive OTP
+              {otpSent ? 'Enter the OTP sent to your mobile' : 'Enter your mobile number to login or register'}
             </CardDescription>
           </CardHeader>
           <CardContent>
