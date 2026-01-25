@@ -263,6 +263,28 @@ async def send_otp(request: OTPRequest):
     print(f"[MOCK SMS] Sending OTP {otp} to {request.mobile}")
     return {"success": True, "message": f"OTP sent to {request.mobile}", "otp": otp}
 
+@api_router.post("/auth/check-existing")
+async def check_existing_user(request: dict):
+    mobile = request.get('mobile')
+    if not mobile:
+        raise HTTPException(status_code=400, detail="Mobile number required")
+    
+    user = await db.lawyers.find_one({"mobile": mobile}, {"_id": 0})
+    return {"exists": user is not None}
+
+@api_router.post("/auth/signin")
+async def signin_user(request: dict):
+    mobile = request.get('mobile')
+    if not mobile:
+        raise HTTPException(status_code=400, detail="Mobile number required")
+    
+    user = await db.lawyers.find_one({"mobile": mobile}, {"_id": 0})
+    if not user:
+        return {"success": False, "message": "User not found"}
+    
+    token = create_token(user['id'])
+    return {"success": True, "token": token, "user": user}
+
 @api_router.post("/auth/verify-otp")
 async def verify_otp(request: OTPVerify):
     stored_otp = OTP_STORAGE.get(request.mobile)
