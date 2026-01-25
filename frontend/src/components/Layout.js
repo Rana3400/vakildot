@@ -57,8 +57,10 @@ const Layout = ({ user, onLogout }) => {
 
         <div className="p-4 border-t border-sidebar-active">
           <div className="mb-3 px-4">
-            <p className="text-sm font-medium text-sidebar-fg">{lawyer?.name || 'Advocate'}</p>
-            <p className="text-xs text-sidebar-fg/60">{lawyer?.bar_council_number || ''}</p>
+            <p className="text-sm font-medium text-sidebar-fg">{user?.name || 'User'}</p>
+            <p className="text-xs text-sidebar-fg/60">
+              {userRole === 'lawyer' ? (user?.bar_council_number || '') : 'Client'}
+            </p>
           </div>
           <button
             onClick={onLogout}
