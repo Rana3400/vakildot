@@ -144,15 +144,18 @@ const Cases = ({ userRole = 'lawyer' }) => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-foreground">Cases</h1>
-          <p className="text-muted-foreground mt-1">Manage all your legal cases</p>
+          <p className="text-muted-foreground mt-1">
+            {userRole === 'client' ? 'View your case status and hearing dates' : 'Manage all your legal cases'}
+          </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="create-case-button">
-              <Plus className="h-4 w-4 mr-2" />
-              New Case
-            </Button>
-          </DialogTrigger>
+        {userRole === 'lawyer' && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button data-testid="create-case-button">
+                <Plus className="h-4 w-4 mr-2" />
+                New Case
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Case</DialogTitle>
