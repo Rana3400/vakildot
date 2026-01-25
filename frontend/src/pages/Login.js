@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { Scale } from 'lucide-react';
+import { Scale, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,12 +12,15 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Login = ({ onLogin }) => {
+  const { userType } = useParams(); // 'lawyer' or 'client'
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sentOtp, setSentOtp] = useState('');
   const navigate = useNavigate();
+
+  const isLawyer = userType === 'lawyer';
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
@@ -30,7 +33,7 @@ const Login = ({ onLogin }) => {
     try {
       const response = await axios.post(`${API}/auth/send-otp`, { mobile });
       toast.success('OTP sent successfully!');
-      setSentOtp(response.data.otp); // For demo purposes
+      setSentOtp(response.data.otp);
       setOtpSent(true);
       toast.info(`Demo OTP: ${response.data.otp}`);
     } catch (error) {
@@ -53,11 +56,33 @@ const Login = ({ onLogin }) => {
       const response = await axios.post(`${API}/auth/verify-otp`, { mobile, otp });
       
       if (response.data.is_new) {
-        // New user - redirect to onboarding
-        navigate('/onboarding', { state: { mobile } });
+        // New user - redirect to appropriate onboarding
+        if (isLawyer) {
+          navigate('/onboarding/lawyer', { state: { mobile } });
+        } else {
+          navigate('/onboarding/client', { state: { mobile } });
+        }
       } else {
-        // Existing user - login
-        onLogin(response.data.token, response.data.lawyer);
+        // Existing user - check if role matches
+        const user = response.data.user;
+        const userRole = user.user_role || 'lawyer'; // default to lawyer for existing users
+        
+        if (isLawyer && userRole !== 'lawyer') {
+          toast.error('This account is registered as a client. Please use Client Case Status option.');
+          setOtpSent(false);
+          setOtp('');
+          return;
+        }
+        
+        if (!isLawyer && userRole === 'lawyer') {
+          toast.error('This account is registered as a lawyer. Please use Lawyer Access option.');
+          setOtpSent(false);
+          setOtp('');
+          return;
+        }
+        
+        // Login successful
+        onLogin(response.data.token, user);
         toast.success('Login successful!');
         navigate('/dashboard');
       }
@@ -72,17 +97,31 @@ const Login = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="mb-4"
+            data-testid="back-to-welcome-button"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
+
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Scale className="h-10 w-10 text-primary" />
             <span className="text-3xl font-bold font-serif text-primary">VakilDesk</span>
           </div>
-          <p className="text-muted-foreground">Login to your advocate account</p>
+          <p className="text-muted-foreground">
+            {isLawyer ? 'Login to your advocate account' : 'Check your case status'}
+          </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Login with OTP</CardTitle>
+            <CardTitle>{isLawyer ? 'Lawyer Login' : 'Client Login'}</CardTitle>
             <CardDescription>
               Enter your registered mobile number to receive OTP
             </CardDescription>
