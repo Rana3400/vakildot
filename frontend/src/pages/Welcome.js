@@ -10,6 +10,17 @@ const Welcome = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-4xl">
+        {/* Header with Sign In */}
+        <div className="flex justify-end mb-8">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/signin')}
+            data-testid="signin-button"
+          >
+            Sign In
+          </Button>
+        </div>
+
         {/* Logo and Title */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -19,13 +30,13 @@ const Welcome = () => {
           <p className="text-xl text-muted-foreground">The Digital Munshi for Indian Advocates</p>
         </div>
 
-        {/* Two Access Options */}
+        {/* Two Sign Up Options */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Lawyer Registration */}
+          {/* Join as Lawyer */}
           <Card 
             className="cursor-pointer hover:shadow-xl transition-all border-2 hover:border-primary"
-            onClick={() => navigate('/login/lawyer')}
-            data-testid="lawyer-access-card"
+            onClick={() => navigate('/signup/lawyer')}
+            data-testid="lawyer-signup-card"
           >
             <CardContent className="pt-12 pb-12 text-center">
               <div className="h-20 w-20 bg-primary text-primary-foreground rounded-sm flex items-center justify-center mx-auto mb-6">
@@ -35,17 +46,17 @@ const Welcome = () => {
               <p className="text-muted-foreground mb-6">
                 Full case management, client tracking, and billing for advocates and law firms
               </p>
-              <Button size="lg" className="w-full" data-testid="lawyer-access-button">
-                Continue as Lawyer
+              <Button size="lg" className="w-full" data-testid="lawyer-signup-button">
+                Sign Up as Lawyer
               </Button>
             </CardContent>
           </Card>
 
-          {/* Client Registration */}
+          {/* Join as Client */}
           <Card 
             className="cursor-pointer hover:shadow-xl transition-all border-2 hover:border-primary"
-            onClick={() => navigate('/login/client')}
-            data-testid="client-access-card"
+            onClick={() => navigate('/signup/client')}
+            data-testid="client-signup-card"
           >
             <CardContent className="pt-12 pb-12 text-center">
               <div className="h-20 w-20 bg-tarikh-upcoming text-white rounded-sm flex items-center justify-center mx-auto mb-6">
@@ -55,8 +66,8 @@ const Welcome = () => {
               <p className="text-muted-foreground mb-6">
                 View your case details, hearing dates, and track your legal matters
               </p>
-              <Button size="lg" variant="outline" className="w-full" data-testid="client-access-button">
-                Continue as Client
+              <Button size="lg" variant="outline" className="w-full" data-testid="client-signup-button">
+                Sign Up as Client
               </Button>
             </CardContent>
           </Card>
