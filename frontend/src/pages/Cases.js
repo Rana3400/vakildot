@@ -104,6 +104,23 @@ const Cases = ({ userRole = 'lawyer' }) => {
     }));
   };
 
+  const handleDeleteCase = async (caseId) => {
+    if (!window.confirm('Are you sure you want to delete this case? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API}/cases/${caseId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Case deleted successfully!');
+      fetchCases();
+    } catch (error) {
+      toast.error('Failed to delete case');
+      console.error(error);
+    }
+  };
+
   const filteredCases = cases.filter(c => 
     c.case_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
