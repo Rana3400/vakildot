@@ -282,10 +282,11 @@ async def verify_otp(request: OTPVerify):
 async def register_lawyer(lawyer_data: LawyerRegister):
     existing = await db.lawyers.find_one({"mobile": lawyer_data.mobile}, {"_id": 0})
     if existing:
-        raise HTTPException(status_code=400, detail="Lawyer already registered")
+        raise HTTPException(status_code=400, detail="User already registered")
     
     lawyer_dict = lawyer_data.model_dump()
     lawyer_dict['id'] = str(uuid.uuid4())
+    lawyer_dict['user_role'] = 'lawyer'
     lawyer_dict['created_at'] = datetime.now(timezone.utc).isoformat()
     
     await db.lawyers.insert_one(lawyer_dict)
@@ -293,7 +294,30 @@ async def register_lawyer(lawyer_data: LawyerRegister):
     token = create_token(lawyer_dict['id'])
     lawyer_dict.pop('_id', None)
     
-    return {"success": True, "token": token, "lawyer": lawyer_dict}
+    return {"success": True, "token": token, "user": lawyer_dict}
+
+@api_router.post("/auth/register-client")
+async def register_client(client_data: ClientRegister):
+    existing = await db.lawyers.find_one({"mobile": client_data.mobile}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="User already registered")
+    
+    client_dict = client_data.model_dump()
+    client_dict['id'] = str(uuid.uuid4())
+    client_dict['user_role'] = 'client'
+    client_dict['email'] = ''
+    client_dict['bar_council_number'] = ''
+    client_dict['practice_areas'] = []
+    client_dict['courts'] = []
+    client_dict['role'] = 'client'
+    client_dict['created_at'] = datetime.now(timezone.utc).isoformat()
+    
+    await db.lawyers.insert_one(client_dict)
+    
+    token = create_token(client_dict['id'])
+    client_dict.pop('_id', None)
+    
+    return {"success": True, "token": token, "user": client_dict}
 
 # ============= LAWYER ROUTES =============
 
