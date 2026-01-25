@@ -28,10 +28,13 @@ const SignIn = ({ onLogin }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/auth/send-otp`, { mobile });
-      toast.success('OTP sent successfully!');
-      setOtpSent(true);
-      toast.info(`Demo OTP: ${response.data.otp}`);
+      const result = await sendOTP(mobile);
+      if (result.success) {
+        toast.success('OTP sent to your mobile number!');
+        setOtpSent(true);
+      } else {
+        toast.error(result.error || 'Failed to send OTP');
+      }
     } catch (error) {
       toast.error('Failed to send OTP');
       console.error(error);
@@ -49,21 +52,28 @@ const SignIn = ({ onLogin }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/auth/verify-otp`, { mobile, otp });
+      const verifyResult = await verifyOTP(otp);
+      if (!verifyResult.success) {
+        toast.error(verifyResult.error || 'Invalid OTP');
+        setLoading(false);
+        return;
+      }
+
+      // Check if user exists in MongoDB
+      const response = await axios.post(`${API}/auth/signin`, { mobile });
       
-      if (response.data.is_new) {
+      if (!response.data.success) {
         toast.error('Account not found. Please sign up first.');
         setTimeout(() => navigate('/'), 2000);
         return;
       }
 
-      // Existing user - login with automatic role detection
-      const user = response.data.user;
-      onLogin(response.data.token, user);
-      toast.success(`Welcome back, ${user.name}!`);
+      // Login successful
+      onLogin(response.data.token, response.data.user);
+      toast.success(`Welcome back, ${response.data.user.name}!`);
       navigate('/dashboard');
     } catch (error) {
-      toast.error('Invalid OTP. Please try again.');
+      toast.error(error.response?.data?.detail || 'Login failed. Please try again.');
       console.error(error);
     } finally {
       setLoading(false);
