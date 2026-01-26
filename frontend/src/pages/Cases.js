@@ -318,6 +318,18 @@ const Cases = ({ userRole = 'lawyer' }) => {
               </div>
 
               <div className="space-y-2">
+                <Label>Hearing Time</Label>
+                <Input
+                  type="time"
+                  value={formData.next_hearing_time}
+                  onChange={(e) => setFormData(prev => ({ ...prev, next_hearing_time: e.target.value }))}
+                  data-testid="hearing-time-input"
+                  placeholder="10:00"
+                />
+                <p className="text-xs text-muted-foreground">Optional - Time will be included in notifications</p>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Case Description</Label>
                 <Textarea
                   value={formData.case_description}
