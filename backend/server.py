@@ -115,6 +115,7 @@ class CaseCreate(BaseModel):
     judge_name: Optional[str] = None
     case_stage: str  # Filed, Under Trial, Judgment, Appeal
     next_hearing_date: str  # ISO format
+    next_hearing_time: Optional[str] = None  # Time in HH:MM format
     case_description: Optional[str] = None
     reminder_enabled: bool = True
     reminder_types: List[str] = ["sms", "call"]  # sms, call, whatsapp
@@ -132,6 +133,7 @@ class Case(BaseModel):
     judge_name: Optional[str] = None
     case_stage: str
     next_hearing_date: str
+    next_hearing_time: Optional[str] = None
     case_description: Optional[str] = None
     reminder_enabled: bool
     reminder_types: List[str]
