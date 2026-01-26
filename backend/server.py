@@ -475,7 +475,7 @@ async def update_case(case_id: str, update_data: dict, current_lawyer = Depends(
         raise HTTPException(status_code=404, detail="Case not found")
     
     allowed_fields = ['case_number', 'fir_number', 'case_type', 'court_name', 'judge_name', 
-                     'case_stage', 'next_hearing_date', 'case_description', 'reminder_enabled', 'reminder_types']
+                     'case_stage', 'next_hearing_date', 'next_hearing_time', 'case_description', 'reminder_enabled', 'reminder_types']
     update_fields = {k: v for k, v in update_data.items() if k in allowed_fields}
     update_fields['updated_at'] = datetime.now(timezone.utc).isoformat()
     
