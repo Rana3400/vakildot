@@ -86,25 +86,18 @@ const Cases = ({ userRole = 'lawyer' }) => {
         timestamp: new Date().toISOString()
       };
 
-      console.log('Triggering Make.com webhook with payload:', webhookPayload);
-      
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(webhookPayload)
       });
 
       if (response.ok) {
-        console.log('Webhook triggered successfully');
-        toast.success('Notification sent to Make.com workflow!');
-      } else {
-        console.warn('Webhook response not OK:', response.status);
+        console.log('Webhook Sent Successfully');
+        toast.success('Notification sent to Make.com!');
       }
     } catch (error) {
-      console.error('Failed to trigger webhook:', error);
-      // Don't show error toast - webhook failure shouldn't block case creation
+      console.error('Webhook failed:', error);
     }
   };
 
