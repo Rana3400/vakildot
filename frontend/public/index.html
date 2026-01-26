@@ -16,32 +16,5 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    
-    <!-- Firebase CDN Scripts -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-      import { getAuth } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-      import { getFirestore } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
-      
-      const firebaseConfig = {
-        apiKey: "AIzaSyCP_CM8lmBY_X42AyrpbJ8IX29cX0U6sDE",
-        authDomain: "vakil-app-auth.firebaseapp.com",
-        projectId: "vakil-app-auth",
-        storageBucket: "vakil-app-auth.firebasestorage.app",
-        messagingSenderId: "792778219182",
-        appId: "1:792778219182:web:ed322ca2dd46c23ed0973f"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-      
-      console.log('Firebase Initialized', firebaseConfig);
-      
-      // Make Firebase available globally
-      window.firebaseApp = app;
-      window.firebaseAuth = auth;
-      window.firebaseDb = db;
-    </script>
   </body>
 </html>
