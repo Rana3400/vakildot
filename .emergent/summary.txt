@@ -1,0 +1,222 @@
+<analysis>
+**original_problem_statement:**
+The user wants to build a FULL INDIAN LAWYER MANAGEMENT APPLICATION named VakilDesk.
+
+**PRODUCT REQUIREMENTS:**
+- **Vision:** Digitize lawyers' daily work, reduce manual record-keeping, and prevent missed court hearings.
+- **Users:** Individual advocates, law firms, junior advocates, and clerks.
+- **Core Features:**
+    - **Lawyer & Client Management:** Registration, profiles, and linking cases to clients.
+    - **Case Management:** Create/track cases with details like case number, court, judge, and hearing dates.
+    - **Reminder System:** Automated Voice Call (IVR), SMS, and WhatsApp reminders for court dates.
+    - **Document Management:** Securely upload and organize case-related documents.
+    - **Billing & Fees:** Invoice generation and payment tracking.
+    - **User Roles:** Differentiated access for Senior Advocates, Junior Advocates, and Clerks.
+- **Technology Stack (as requested initially):** Mobile App (Flutter), Backend (Node.js/Django), DB (PostgreSQL), and various APIs for communication (Exotel, Gupshup). The agent has implemented a web app using FastAPI, React, and MongoDB.
+- **Recent Additions (from user conversation):**
+    - Role-based access for 'Lawyer' and 'Client' roles.
+    - Firebase Phone OTP for authentication.
+    - User data (profiles) stored in Firestore, while case data remains in MongoDB.
+    - Webhook integration with Make.com for notifications.
+
+**User's preferred language**: English
+
+**what currently exists?**
+A full-stack web application (FastAPI backend, React frontend) for lawyer management named VakilDesk. The application features:
+- A multi-step, role-based entry flow (Welcome screen -> Lawyer/Client signup -> Login).
+- User authentication is partially migrated to Firebase Phone OTP, but is currently in a non-functional state.
+- Backend support for creating/viewing/deleting cases, stored in MongoDB.
+- Role-based access control where clients can only view cases linked to their phone number.
+- A Communication Hub on the client detail page that triggers notifications (SMS, WhatsApp, Voice) via a Make.com webhook.
+- A  endpoint for deployment health checks.
+
+**Last working item**:
+- **Last item agent was working:** The agent was beginning to implement the user's request to finalize the Firebase integration. This involves using a CDN for the Firebase SDK, storing user profiles in Firestore, and adding a Make.com webhook trigger to the Add Case form.
+- **Status:** IN PROGRESS
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** both
+- **User Testing Done:** N
+
+**All Pending/In progress Issue list**:
+  - **Issue 1:** The authentication flow is broken due to a mid-flight migration to Firebase. Sign-up and Sign-in pages are created but not fully wired to the Firebase OTP logic. (Priority: P0)
+
+  **Issues Detail:**
+  - **Issue 1: Incomplete Firebase Authentication Integration**
+     - **Attempted fixes:** The agent installed the  npm package and created a  config file. It added placeholder logic and  divs to the onboarding and sign-in components. However, this was incomplete and did not follow the user's latest instruction to use the CDN.
+     - **Next debug checklist:**
+       1. Remove the  dependency from  and delete  and  to ensure a clean state, then run yarn install v1.22.22
+[1/4] Resolving packages...
+[2/4] Fetching packages...
+[3/4] Linking dependencies...
+[4/4] Building fresh packages...
+success Saved lockfile.
+Done in 0.18s..
+       2. Add the Firebase script tags provided by the user to .
+       3. Modify  to initialize Firebase from the global  object and export the  service. Add  for verification.
+       4. In , , and , implement the full Firebase phone authentication flow ( , , and ).
+       5. On successful authentication, use the Firebase SDK to save user data (Name, Email, Phone, Role) to the corresponding **Firestore** collection ( or ).
+       6. After successful login/signup, redirect the user to their dashboard and store the auth token in local storage.
+     - **Why fix this issue and what will be achieved with the fix?** This will complete the user's request for a secure, professional phone-based authentication system, which is critical for the app's functionality.
+     - **Status:** IN PROGRESS
+     - **Is recurring issue?** Y
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on other issue:** None
+
+**In progress Task List**:
+  - **Task 1: Integrate Make.com Webhook into 'Add Case' Form** (Priority: P0)
+     - **Where to resume:** The logic needs to be added to the case creation form submission handler.
+     - **What will be achieved with this?** Every time a new case is added, an automated notification will be sent to the Make.com workflow, enabling automated reminders.
+     - **How to implement:**
+        1. In  (or the component handling new case creation), find the  or equivalent function.
+        2. After the existing API call to save the case to the backend succeeds, add a new  or  POST request to the webhook URL: .
+        3. The JSON payload for this request must include: , , , and .
+     - **Status:** NOT STARTED
+     - **Should Test frontend/backend/both after fix?** backend
+     - **Blocked on something:** Firebase authentication needs to be working to access the 'Add Case' functionality.
+
+**Upcoming and Future Tasks**
+- **Upcoming Tasks:**
+    - **Automated Reminders (P1):** Implement a backend scheduler (e.g., using ) to automatically trigger the notification webhook for upcoming hearing dates (3 days before, 1 day before, etc.).
+- **Future Tasks:**
+    - **Document Management:** Build UI and backend endpoints for uploading, storing (e.g., in S3), and organizing case documents.
+    - **Billing and Fee Management:** Create modules for generating invoices and tracking payment status.
+    - **Legal Calendar:** Integrate a calendar view showing court holidays and hearing dates, with Google Calendar sync.
+    - **Advanced User Roles:** Expand permissions beyond the simple lawyer/client split (e.g., Clerk, Senior Advocate).
+    - **Data Integrity:** The user has repeatedly emphasized not to delete or overwrite existing case data. All new features must respect this.
+
+**Completed work in this session**
+- **Scaffolding:** Created the initial FastAPI backend and React frontend structure.
+- **Role-Based Access Control (RBAC):** Implemented a basic two-role system ('lawyer', 'client') with distinct permissions and views.
+- **Webhook Integration:** Built a Communication Hub that successfully sends notifications to a user-provided Make.com webhook.
+- **Deployment Fixes:** Resolved a critical deployment issue by adding a  endpoint to the backend.
+- **UI/UX Flow:** Designed and implemented a multi-step user entry flow, including a Welcome screen, separate Sign-Up forms for lawyers and clients, and a distinct Sign-In page.
+
+**Earlier issues found/mentioned but not fixed**
+- None. The agent has addressed all user-reported issues, although some fixes required multiple iterations.
+
+**Known issue recurrence from previous fork**
+- **Issue recurrence in previous fork:** None
+- **Recurrence count:** 0
+- **Status:** NA
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Backend:** FastAPI
+- **Frontend:** React
+- **Database:** Split architecture - **MongoDB** for core application data (cases) and **Google Firestore** for user profiles and authentication data.
+- **Authentication:** Firebase Phone Authentication (OTP).
+- **Integrations:** Make.com webhooks for notifications.
+- **Styling:** TailwindCSS
+
+**key DB schema**
+- **MongoDB  collection:** 
+- **MongoDB  collection:** (Partially deprecated) 
+- **Firestore  collection:** (To be created) 
+- **Firestore  collection:** (To be created) 
+
+**changes in tech stack**
+- The user's original request mentioned a potential for Node.js/Django and PostgreSQL, but the implementation uses **FastAPI** and **MongoDB**.
+- Authentication has been shifted from a custom JWT-based system to **Firebase Phone Authentication**.
+- The database model is now a hybrid, using **MongoDB** for case data and **Firestore** for user data.
+
+**All files of reference**
+- : To be updated with Firebase CDN scripts.
+- : Contains Firebase initialization logic.
+- : Needs to be fixed to implement Firebase signup.
+- : Needs to be fixed to implement Firebase signup.
+- : Needs to be fixed to implement Firebase sign-in.
+- : Needs to be updated to trigger the Make.com webhook on case creation.
+- : The main backend file. No immediate changes are planned, but it may be needed for debugging.
+
+**key api endpoints**
+- : (Being deprecated) Handles user registration.
+- : (Being deprecated) Handles user login and JWT token generation.
+- : Fetches cases. Filters by  if the user role is 'client'.
+- : Creates a new case.
+- : Deletes a case (lawyer role only).
+- : Forwards notification data to an external webhook.
+- : Health check endpoint for deployment.
+
+**Critical Info for New Agent**
+- **CRITICAL:** You must follow a split-database approach. User authentication and profiles (**name, email, phone, role**) must be handled via **Firebase Auth** and stored in **Firestore**. Core application data like **cases** must remain in **MongoDB**.
+- The user's latest request specified using Firebase via a **CDN script tag** in . Do not use the npm <command>
+
+Usage:
+
+npm install        install all the dependencies in your project
+npm install <foo>  add the <foo> dependency to your project
+npm test           run this project's tests
+npm run <foo>      run the script named <foo>
+npm <command> -h   quick help on <command>
+npm -l             display usage info for all commands
+npm help <term>    search for help on <term>
+npm help npm       more involved overview
+
+All commands:
+
+    access, adduser, audit, bugs, cache, ci, completion,
+    config, dedupe, deprecate, diff, dist-tag, docs, doctor,
+    edit, exec, explain, explore, find-dupes, fund, get, help,
+    help-search, hook, init, install, install-ci-test,
+    install-test, link, ll, login, logout, ls, org, outdated,
+    owner, pack, ping, pkg, prefix, profile, prune, publish,
+    query, rebuild, repo, restart, root, run-script, sbom,
+    search, set, shrinkwrap, star, stars, start, stop, team,
+    test, token, uninstall, unpublish, unstar, update, version,
+    view, whoami
+
+Specify configs in the ini-formatted file:
+    /root/.npmrc
+or on the command line via: npm <command> --key=value
+
+More configuration info: npm help config
+Configuration fields: npm help 7 config
+
+npm@10.8.2 /usr/lib/node_modules/npm package flow.
+- Existing case data in the MongoDB database is important. Do not write any code that alters, migrates, or deletes it. The new authentication system should link to this data via the user's phone number.
+- The Make.com webhook for the Add Case feature is a new requirement and is separate from the existing Communication Hub webhook.
+
+**documents and test reports created in this job**
+- 
+- 
+- 
+- 
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User:** Requests Firebase integration with a specific config script for OTP auth, storing user data in Firestore, and keeping case data in MongoDB. Also asks to add a Make.com webhook trigger to the 'Add Case' form. **(PENDING)**
+2.  **User:** Asks to fix registration forms, stating Sign-Up must collect Name/Email/Phone before OTP, while Sign-In should only be Phone+OTP.
+3.  **Agent:** Confirms fix for registration forms. (Completed)
+4.  **User:** Requests a finalized, professional entry flow with 'Join' cards, a separate 'Sign In' button, and automatic role detection after login.
+5.  **Agent:** Implements the finalized entry flow. (Completed)
+6.  **User:** Requests a simplified registration flow.
+7.  **Agent:** Implements the simplified flow. (Completed)
+8.  **User:** Requests a role-based access system with 'Lawyer' and 'Client' roles, a new Welcome screen, and specific permissions, while keeping all existing data.
+9.  **Agent:** Implements the role-based access system. (Completed)
+10. **User:** Asks to update the webhook URL to a real Make.com URL.
+11. **Agent:** Updates the URL and confirms it works. (Completed)
+
+**Project Health Check:**
+- **Broken:** The entire user authentication flow (Sign-Up and Sign-In) is currently broken and non-functional due to the incomplete migration to Firebase.
+
+**3rd Party Integrations**
+- **Firebase Authentication:** For user Phone OTP login. Requires user-provided config keys (already provided).
+- **Google Firestore:** For storing user profile data. Uses the same Firebase config.
+- **Make.com:** For workflow automation via webhooks. The user has provided the webhook URL.
+
+**Testing status**
+- **Testing agent used after significant changes:** NO (Agent has been using manual screenshots and curl commands recently).
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** None
+- **Known regressions:** The entire authentication system is a regression from the previous JWT-based implementation.
+
+**Credentials to test flow:**
+- No credentials are required for the upcoming tasks, as all necessary API keys (Firebase) and webhook URLs (Make.com) have been provided by the user in the prompt history.
+
+**What agent forgot to execute**
+- The agent has not yet started the main implementation for the last user request:
+    1.  Fully integrating Firebase Auth using the CDN method.
+    2.  Saving user data to Firestore upon registration.
+    3.  Adding the Make.com webhook trigger to the 'Add Case' form submission logic.
+</analysis>

@@ -170,7 +170,7 @@ You can also set up automatic daily reminders using the same webhook:
 2. **HTTP Module**: 
    ```
    Method: POST
-   URL: https://legalcms-2.preview.emergentagent.com/api/notifications/trigger-auto-reminders
+   URL: https://lawyermgmt.preview.emergentagent.com/api/notifications/trigger-auto-reminders
    Headers:
      - Authorization: Bearer {LAWYER_JWT_TOKEN}
      - Content-Type: application/json
