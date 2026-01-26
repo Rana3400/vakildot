@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Scale, ArrowLeft } from 'lucide-react';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { sendOTP, verifyOTP } from '@/firebase';
+import { sendOTP, verifyOTP, getUserFromFirestore } from '@/firebase';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -59,7 +59,7 @@ const SignIn = ({ onLogin }) => {
         return;
       }
 
-      // Check if user exists in MongoDB
+      // Check if user exists in MongoDB (primary data source for cases)
       const response = await axios.post(`${API}/auth/signin`, { mobile });
       
       if (!response.data.success) {

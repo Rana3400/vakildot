@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { sendOTP, verifyOTP } from '@/firebase';
+import { sendOTP, verifyOTP, saveUserToFirestore } from '@/firebase';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -28,6 +28,11 @@ const ClientOnboarding = ({ onComplete }) => {
     
     if (formData.mobile.length !== 10) {
       toast.error('Please enter valid 10-digit mobile number');
+      return;
+    }
+    
+    if (!formData.name.trim()) {
+      toast.error('Please enter your name');
       return;
     }
 
@@ -65,6 +70,8 @@ const ClientOnboarding = ({ onComplete }) => {
         return;
       }
 
+      const firebaseUser = verifyResult.user;
+
       const checkResponse = await axios.post(`${API}/auth/check-existing`, { 
         mobile: formData.mobile 
       });
@@ -73,6 +80,16 @@ const ClientOnboarding = ({ onComplete }) => {
         toast.error('Account already exists. Please sign in instead.');
         setTimeout(() => navigate('/signin'), 2000);
         return;
+      }
+
+      // Save user to Firestore
+      const firestoreResult = await saveUserToFirestore(firebaseUser.uid, {
+        name: formData.name,
+        phone: formData.mobile
+      }, 'client');
+      
+      if (!firestoreResult.success) {
+        console.warn('Firestore save warning:', firestoreResult.error);
       }
 
       const response = await axios.post(`${API}/auth/register-client`, formData);

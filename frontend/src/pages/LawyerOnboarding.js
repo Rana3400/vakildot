@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { sendOTP, verifyOTP } from '@/firebase';
+import { sendOTP, verifyOTP, saveUserToFirestore } from '@/firebase';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -33,6 +33,16 @@ const LawyerOnboarding = ({ onComplete }) => {
     
     if (formData.mobile.length !== 10) {
       toast.error('Please enter valid 10-digit mobile number');
+      return;
+    }
+    
+    if (!formData.name.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      toast.error('Please enter your email');
       return;
     }
 
@@ -72,6 +82,8 @@ const LawyerOnboarding = ({ onComplete }) => {
         return;
       }
 
+      const firebaseUser = verifyResult.user;
+
       // Check if user already exists in MongoDB
       const checkResponse = await axios.post(`${API}/auth/check-existing`, { 
         mobile: formData.mobile 
@@ -83,7 +95,18 @@ const LawyerOnboarding = ({ onComplete }) => {
         return;
       }
 
-      // Register new user in MongoDB (Firestore not used for user data)
+      // Save user to Firestore
+      const firestoreResult = await saveUserToFirestore(firebaseUser.uid, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.mobile
+      }, 'lawyer');
+      
+      if (!firestoreResult.success) {
+        console.warn('Firestore save warning:', firestoreResult.error);
+      }
+
+      // Register user in MongoDB (for case management)
       const response = await axios.post(`${API}/auth/register`, formData);
       toast.success('Registration successful!');
       onComplete(response.data.token, response.data.user);
