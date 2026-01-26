@@ -83,6 +83,12 @@ export const sendOTP = async (phoneNumber) => {
       errorMessage = 'Too many attempts. Please try again later.';
     } else if (error.code === 'auth/invalid-phone-number') {
       errorMessage = 'Invalid phone number format. Please enter a valid 10-digit number.';
+    } else if (error.code === 'auth/billing-not-enabled') {
+      errorMessage = 'Phone authentication is not enabled. Please contact the administrator to enable Firebase billing.';
+    } else if (error.code === 'auth/operation-not-allowed') {
+      errorMessage = 'Phone authentication is not enabled in Firebase Console. Please enable it first.';
+    } else if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
+      errorMessage = 'Request timed out. Please refresh the page and try again.';
     }
     
     return { success: false, error: errorMessage, code: error.code };
