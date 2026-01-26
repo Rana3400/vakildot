@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const WEBHOOK_URL = process.env.REACT_APP_WEBHOOK_URL || 'https://hook.eu1.make.com/sk7z17b8jxdwifdxa5736lmbk5bp2c7n';
 
 const Cases = ({ userRole = 'lawyer' }) => {
   const [cases, setCases] = useState([]);
@@ -32,6 +33,7 @@ const Cases = ({ userRole = 'lawyer' }) => {
     judge_name: '',
     case_stage: 'Filed',
     next_hearing_date: '',
+    next_hearing_time: '',
     case_description: '',
     reminder_enabled: true,
     reminder_types: ['sms', 'call']
@@ -68,13 +70,61 @@ const Cases = ({ userRole = 'lawyer' }) => {
     }
   };
 
+  // Function to trigger Make.com webhook
+  const triggerWebhook = async (caseData, clientData) => {
+    try {
+      const webhookPayload = {
+        client_name: clientData.name,
+        client_phone: clientData.mobile,
+        case_number: caseData.case_number,
+        hearing_date: caseData.next_hearing_date,
+        hearing_time: caseData.next_hearing_time || '10:00',
+        court_name: caseData.court_name,
+        case_type: caseData.case_type,
+        case_description: caseData.case_description || '',
+        trigger_source: 'case_creation',
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('Triggering Make.com webhook with payload:', webhookPayload);
+      
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload)
+      });
+
+      if (response.ok) {
+        console.log('Webhook triggered successfully');
+        toast.success('Notification sent to Make.com workflow!');
+      } else {
+        console.warn('Webhook response not OK:', response.status);
+      }
+    } catch (error) {
+      console.error('Failed to trigger webhook:', error);
+      // Don't show error toast - webhook failure shouldn't block case creation
+    }
+  };
+
   const handleCreateCase = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/cases`, formData, {
+      // Get selected client info for webhook
+      const selectedClient = clients.find(c => c.id === formData.client_id);
+      
+      const response = await axios.post(`${API}/cases`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       toast.success('Case created successfully!');
+      
+      // Trigger Make.com webhook after successful case creation
+      if (selectedClient) {
+        await triggerWebhook(formData, selectedClient);
+      }
+      
       setDialogOpen(false);
       fetchCases();
       setFormData({
@@ -86,6 +136,7 @@ const Cases = ({ userRole = 'lawyer' }) => {
         judge_name: '',
         case_stage: 'Filed',
         next_hearing_date: '',
+        next_hearing_time: '',
         case_description: '',
         reminder_enabled: true,
         reminder_types: ['sms', 'call']
