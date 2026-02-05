@@ -68,8 +68,12 @@ class LawyerRegister(BaseModel):
     bar_council_number: str = ""
     practice_areas: List[str] = []
     courts: List[str] = []
-    role: str = "senior_advocate"  # senior_advocate, junior_advocate, clerk
-    user_role: str = "lawyer"  # lawyer or client
+    practice_field: str = ""
+    court: str = ""
+    lawyer_type: str = ""  # Advocate or Practitioner
+    chamber_number: str = ""
+    role: str = "senior_advocate"
+    user_role: str = "lawyer"
 
 class ClientRegister(BaseModel):
     mobile: str
