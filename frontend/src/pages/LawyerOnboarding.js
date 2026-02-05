@@ -6,20 +6,77 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { sendOTP, verifyOTP, saveUserToFirestore } from '@/firebase';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Law practice fields
+const PRACTICE_FIELDS = [
+  'Criminal Law',
+  'Civil Law',
+  'Constitutional Law',
+  'Corporate Law',
+  'Family Law',
+  'Property Law',
+  'Tax Law',
+  'Labour Law',
+  'Intellectual Property',
+  'Banking & Finance',
+  'Environmental Law',
+  'Cyber Law',
+  'Consumer Protection',
+  'Immigration Law',
+  'Human Rights'
+];
+
+// Indian Courts
+const INDIAN_COURTS = [
+  'Supreme Court of India',
+  'Delhi High Court',
+  'Bombay High Court',
+  'Calcutta High Court',
+  'Madras High Court',
+  'Karnataka High Court',
+  'Gujarat High Court',
+  'Allahabad High Court',
+  'Punjab & Haryana High Court',
+  'Rajasthan High Court',
+  'Kerala High Court',
+  'Telangana High Court',
+  'Andhra Pradesh High Court',
+  'Patna High Court',
+  'Jharkhand High Court',
+  'Orissa High Court',
+  'Chhattisgarh High Court',
+  'Madhya Pradesh High Court',
+  'Uttarakhand High Court',
+  'Himachal Pradesh High Court',
+  'Jammu & Kashmir High Court',
+  'Gauhati High Court',
+  'District Court',
+  'Sessions Court',
+  'Magistrate Court',
+  'Consumer Forum',
+  'Labour Court',
+  'Family Court',
+  'Tribunal'
+];
+
 const LawyerOnboarding = ({ onComplete }) => {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(1); // Step 1: Form, Step 2: OTP
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     mobile: '',
+    practice_field: '',
+    court: '',
+    lawyer_type: '',
+    chamber_number: '',
     bar_council_number: '',
     practice_areas: [],
     courts: [],
@@ -46,9 +103,23 @@ const LawyerOnboarding = ({ onComplete }) => {
       return;
     }
 
+    if (!formData.practice_field) {
+      toast.error('Please select your practice field');
+      return;
+    }
+
+    if (!formData.court) {
+      toast.error('Please select your court');
+      return;
+    }
+
+    if (!formData.lawyer_type) {
+      toast.error('Please select Advocate or Practitioner');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Send OTP via Firebase
       const result = await sendOTP(formData.mobile);
       if (result.success) {
         toast.success('OTP sent to your mobile number!');
@@ -74,7 +145,6 @@ const LawyerOnboarding = ({ onComplete }) => {
 
     setLoading(true);
     try {
-      // Verify OTP via Firebase
       const verifyResult = await verifyOTP(otp);
       if (!verifyResult.success) {
         toast.error(verifyResult.error || 'Invalid OTP');
@@ -84,7 +154,6 @@ const LawyerOnboarding = ({ onComplete }) => {
 
       const firebaseUser = verifyResult.user;
 
-      // Check if user already exists in MongoDB
       const checkResponse = await axios.post(`${API}/auth/check-existing`, { 
         mobile: formData.mobile 
       });
@@ -95,19 +164,21 @@ const LawyerOnboarding = ({ onComplete }) => {
         return;
       }
 
-      // Save user to Firestore
-      const firestoreResult = await saveUserToFirestore(firebaseUser.uid, {
+      await saveUserToFirestore(firebaseUser.uid, {
         name: formData.name,
         email: formData.email,
-        phone: formData.mobile
+        phone: formData.mobile,
+        practice_field: formData.practice_field,
+        court: formData.court,
+        lawyer_type: formData.lawyer_type,
+        chamber_number: formData.chamber_number
       }, 'lawyer');
-      
-      if (!firestoreResult.success) {
-        console.warn('Firestore save warning:', firestoreResult.error);
-      }
 
-      // Register user in MongoDB (for case management)
-      const response = await axios.post(`${API}/auth/register`, formData);
+      const response = await axios.post(`${API}/auth/register`, {
+        ...formData,
+        practice_areas: [formData.practice_field],
+        courts: [formData.court]
+      });
       toast.success('Registration successful!');
       onComplete(response.data.token, response.data.user);
       navigate('/dashboard');
@@ -120,34 +191,32 @@ const LawyerOnboarding = ({ onComplete }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 py-12">
-      {/* Hidden reCAPTCHA container */}
+    <div className="min-h-screen bg-background p-4 py-8">
       <div id="recaptcha-container"></div>
       
       <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Scale className="h-10 w-10 text-primary" />
-            <span className="text-3xl font-bold font-serif text-primary">VakilDot</span>
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Scale className="h-8 w-8 text-primary" />
+            <span className="text-2xl font-bold font-serif text-primary">VakilDot</span>
           </div>
-          <p className="text-muted-foreground">Complete your lawyer profile</p>
+          <p className="text-muted-foreground text-sm">Complete your lawyer profile</p>
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Lawyer Sign Up</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Lawyer Sign Up</CardTitle>
             <CardDescription>
               {step === 1 ? 'Create your lawyer account' : 'Verify your phone number'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {step === 1 ? (
-              <form onSubmit={handleFormSubmit} className="space-y-4">
-                <div className="space-y-2">
+              <form onSubmit={handleFormSubmit} className="space-y-3">
+                <div className="space-y-1">
                   <Label htmlFor="name">Full Name *</Label>
                   <Input
                     id="name"
-                    type="text"
                     placeholder="Enter your full name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -156,7 +225,7 @@ const LawyerOnboarding = ({ onComplete }) => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="email">Email Address *</Label>
                   <Input
                     id="email"
@@ -169,7 +238,7 @@ const LawyerOnboarding = ({ onComplete }) => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="mobile">Mobile Number *</Label>
                   <Input
                     id="mobile"
@@ -180,6 +249,58 @@ const LawyerOnboarding = ({ onComplete }) => {
                     maxLength={10}
                     data-testid="lawyer-mobile-input"
                     required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label>Practice Field *</Label>
+                  <Select value={formData.practice_field} onValueChange={(value) => setFormData(prev => ({ ...prev, practice_field: value }))}>
+                    <SelectTrigger data-testid="practice-field-select">
+                      <SelectValue placeholder="Select your practice field" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRACTICE_FIELDS.map(field => (
+                        <SelectItem key={field} value={field}>{field}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label>Court *</Label>
+                  <Select value={formData.court} onValueChange={(value) => setFormData(prev => ({ ...prev, court: value }))}>
+                    <SelectTrigger data-testid="court-select">
+                      <SelectValue placeholder="Select your court" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INDIAN_COURTS.map(court => (
+                        <SelectItem key={court} value={court}>{court}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label>Type *</Label>
+                  <Select value={formData.lawyer_type} onValueChange={(value) => setFormData(prev => ({ ...prev, lawyer_type: value }))}>
+                    <SelectTrigger data-testid="lawyer-type-select">
+                      <SelectValue placeholder="Advocate or Practitioner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Advocate">Advocate</SelectItem>
+                      <SelectItem value="Practitioner">Practitioner</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="chamber">Chamber Number</Label>
+                  <Input
+                    id="chamber"
+                    placeholder="Enter your chamber number"
+                    value={formData.chamber_number}
+                    onChange={(e) => setFormData(prev => ({ ...prev, chamber_number: e.target.value }))}
+                    data-testid="chamber-number-input"
                   />
                 </div>
 
@@ -209,13 +330,7 @@ const LawyerOnboarding = ({ onComplete }) => {
                   {loading ? 'Verifying...' : 'Verify & Complete Registration'}
                 </Button>
 
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  className="w-full" 
-                  onClick={() => setStep(1)}
-                  data-testid="lawyer-back-button"
-                >
+                <Button type="button" variant="ghost" className="w-full" onClick={() => setStep(1)} data-testid="lawyer-back-button">
                   Back to Edit Details
                 </Button>
               </form>
@@ -224,11 +339,7 @@ const LawyerOnboarding = ({ onComplete }) => {
             <div className="text-center mt-4">
               <p className="text-sm text-muted-foreground">
                 Already have an account?{' '}
-                <button
-                  onClick={() => navigate('/signin')}
-                  className="text-primary hover:underline font-medium"
-                  data-testid="goto-signin-link"
-                >
+                <button onClick={() => navigate('/signin')} className="text-primary hover:underline font-medium" data-testid="goto-signin-link">
                   Login here
                 </button>
               </p>
