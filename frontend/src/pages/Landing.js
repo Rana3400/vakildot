@@ -44,7 +44,7 @@ const Landing = () => {
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Scale className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold font-serif text-primary">VakilDesk</span>
+            <span className="text-2xl font-bold font-serif text-primary">VakilDot</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link to="/login">
@@ -159,10 +159,10 @@ const Landing = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Scale className="h-6 w-6 text-primary" />
-              <span className="font-bold font-serif text-primary">VakilDesk</span>
+              <span className="font-bold font-serif text-primary">VakilDot</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2025 VakilDesk. Built for Indian Legal Professionals.
+              © 2025 VakilDot. Built for Indian Legal Professionals.
             </p>
           </div>
         </div>

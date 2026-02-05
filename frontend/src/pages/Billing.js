@@ -26,7 +26,7 @@ const Billing = () => {
     description: '',
     due_date: ''
   });
-  const token = localStorage.getItem('vakildesk_token');
+  const token = localStorage.getItem('vakildot_token');
 
   useEffect(() => {
     fetchInvoices();

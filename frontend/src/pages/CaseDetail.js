@@ -17,7 +17,7 @@ const CaseDetail = () => {
   const [caseData, setCaseData] = useState(null);
   const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem('vakildesk_token');
+  const token = localStorage.getItem('vakildot_token');
 
   useEffect(() => {
     fetchCaseDetails();

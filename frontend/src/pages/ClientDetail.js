@@ -15,7 +15,7 @@ const ClientDetail = () => {
   const [client, setClient] = useState(null);
   const [clientCases, setClientCases] = useState([]);
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem('vakildesk_token');
+  const token = localStorage.getItem('vakildot_token');
 
   useEffect(() => {
     fetchClientDetails();

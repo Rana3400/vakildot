@@ -112,7 +112,7 @@ const ClientOnboarding = ({ onComplete }) => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Scale className="h-10 w-10 text-primary" />
-            <span className="text-3xl font-bold font-serif text-primary">VakilDesk</span>
+            <span className="text-3xl font-bold font-serif text-primary">VakilDot</span>
           </div>
           <p className="text-muted-foreground">Complete your profile to track your cases</p>
         </div>

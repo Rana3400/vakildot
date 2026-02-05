@@ -19,12 +19,12 @@ import Settings from '@/pages/Settings';
 import Layout from '@/components/Layout';
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('vakildesk_token'));
+  const [token, setToken] = useState(localStorage.getItem('vakildot_token'));
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     if (token) {
-      const storedUser = localStorage.getItem('vakildesk_user');
+      const storedUser = localStorage.getItem('vakildot_user');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
@@ -32,18 +32,18 @@ function App() {
   }, [token]);
 
   const handleLogin = (newToken, userData) => {
-    localStorage.setItem('vakildesk_token', newToken);
-    localStorage.setItem('vakildesk_user', JSON.stringify(userData));
+    localStorage.setItem('vakildot_token', newToken);
+    localStorage.setItem('vakildot_user', JSON.stringify(userData));
     // Also keep old key for backward compatibility
-    localStorage.setItem('vakildesk_lawyer', JSON.stringify(userData));
+    localStorage.setItem('vakildot_lawyer', JSON.stringify(userData));
     setToken(newToken);
     setUser(userData);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('vakildesk_token');
-    localStorage.removeItem('vakildesk_user');
-    localStorage.removeItem('vakildesk_lawyer');
+    localStorage.removeItem('vakildot_token');
+    localStorage.removeItem('vakildot_user');
+    localStorage.removeItem('vakildot_lawyer');
     setToken(null);
     setUser(null);
   };

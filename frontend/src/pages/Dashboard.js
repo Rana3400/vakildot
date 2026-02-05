@@ -12,7 +12,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [recentActivity, setRecentActivity] = useState(null);
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem('vakildesk_token');
+  const token = localStorage.getItem('vakildot_token');
 
   useEffect(() => {
     fetchDashboardData();

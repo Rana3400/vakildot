@@ -30,7 +30,7 @@ const Layout = ({ user, onLogout }) => {
         <div className="p-6 border-b border-sidebar-active">
           <Link to="/dashboard" className="flex items-center gap-2">
             <Scale className="h-8 w-8" />
-            <span className="text-2xl font-bold font-serif">VakilDesk</span>
+            <span className="text-2xl font-bold font-serif">VakilDot</span>
           </Link>
         </div>
         
@@ -81,7 +81,7 @@ const Layout = ({ user, onLogout }) => {
             <div className="p-6 border-b border-sidebar-active flex items-center justify-between">
               <Link to="/dashboard" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
                 <Scale className="h-8 w-8" />
-                <span className="text-2xl font-bold font-serif">VakilDesk</span>
+                <span className="text-2xl font-bold font-serif">VakilDot</span>
               </Link>
               <button onClick={() => setSidebarOpen(false)} data-testid="close-sidebar">
                 <X className="h-6 w-6" />
@@ -140,7 +140,7 @@ const Layout = ({ user, onLogout }) => {
           </button>
           <Link to="/dashboard" className="flex items-center gap-2">
             <Scale className="h-6 w-6" />
-            <span className="text-xl font-bold font-serif">VakilDesk</span>
+            <span className="text-xl font-bold font-serif">VakilDot</span>
           </Link>
           <div className="w-6" />
         </div>

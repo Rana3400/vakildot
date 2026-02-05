@@ -25,7 +25,7 @@ const Clients = () => {
     address: '',
     notes: ''
   });
-  const token = localStorage.getItem('vakildesk_token');
+  const token = localStorage.getItem('vakildot_token');
   const navigate = useNavigate();
 
   useEffect(() => {

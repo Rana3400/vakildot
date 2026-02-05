@@ -26,7 +26,7 @@ const Welcome = () => {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Scale className="h-16 w-16 text-primary" />
           </div>
-          <h1 className="text-5xl font-bold font-serif text-foreground mb-3">VakilDesk</h1>
+          <h1 className="text-5xl font-bold font-serif text-foreground mb-3">VakilDot</h1>
           <p className="text-xl text-muted-foreground">The Digital Munshi for Indian Advocates</p>
         </div>
 

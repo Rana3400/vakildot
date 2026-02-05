@@ -38,7 +38,7 @@ const Cases = ({ userRole = 'lawyer' }) => {
     reminder_enabled: true,
     reminder_types: ['sms', 'call']
   });
-  const token = localStorage.getItem('vakildesk_token');
+  const token = localStorage.getItem('vakildot_token');
   const navigate = useNavigate();
 
   useEffect(() => {
