@@ -178,7 +178,7 @@ const ClientDetail = () => {
               <TabsContent value="communication" className="space-y-4 mt-0">
                 <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
                   <h3 className="font-semibold text-lg">Send Notification to {client.name}</h3>
-                  <p className="text-sm opacity-90">WhatsApp, SMS or Voice Call via Make.com + Twilio</p>
+                  <p className="text-sm opacity-90">Send WhatsApp, SMS or Voice Call instantly</p>
                 </div>
 
                 {cases.length > 0 && (
@@ -238,7 +238,7 @@ const ClientDetail = () => {
                 </div>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  Notifications are sent via Make.com webhook to Twilio for delivery
+                  Notifications will be delivered to client's phone
                 </p>
               </TabsContent>
 
