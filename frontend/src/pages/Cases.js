@@ -17,9 +17,22 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const CASE_TYPES = ['Criminal', 'Civil', 'Constitutional', 'Family', 'Property', 'Corporate', 'Tax', 'Labour', 'Consumer'];
+const CASE_TYPES = ['Criminal', 'Civil', 'Constitutional', 'Family', 'Property', 'Corporate', 'Tax', 'Labour', 'Consumer', 'Cyber', 'Environmental'];
 const CASE_STAGES = ['Filed', 'Under Trial', 'Arguments', 'Judgment Reserved', 'Judgment', 'Appeal', 'Closed'];
-const TIME_SLOTS = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM'];
+const TIME_SLOTS = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM'];
+const INDIAN_COURTS = [
+  'Supreme Court of India',
+  'Delhi High Court', 'Bombay High Court', 'Calcutta High Court', 'Madras High Court',
+  'Karnataka High Court', 'Gujarat High Court', 'Allahabad High Court',
+  'Punjab & Haryana High Court', 'Rajasthan High Court', 'Kerala High Court',
+  'Telangana High Court', 'Andhra Pradesh High Court', 'Patna High Court',
+  'Jharkhand High Court', 'Orissa High Court', 'Chhattisgarh High Court',
+  'Madhya Pradesh High Court', 'Uttarakhand High Court', 'Himachal Pradesh High Court',
+  'Jammu & Kashmir High Court', 'Gauhati High Court',
+  'District Court', 'Sessions Court', 'Magistrate Court', 'Civil Court',
+  'Consumer Forum', 'Labour Court', 'Family Court',
+  'NCLT', 'NCLAT', 'DRT', 'DRAT', 'ITAT', 'Customs Tribunal', 'CAT'
+];
 
 const Cases = ({ userRole = 'lawyer' }) => {
   const [cases, setCases] = useState([]);
@@ -28,26 +41,14 @@ const Cases = ({ userRole = 'lawyer' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
-    client_id: '',
-    case_number: '',
-    fir_number: '',
-    case_type: '',
-    court_name: '',
-    judge_name: '',
-    case_stage: 'Filed',
-    next_hearing_date: '',
-    next_hearing_time: '10:00 AM',
-    case_description: '',
-    reminder_enabled: true,
-    reminder_types: ['sms', 'call']
+    client_id: '', case_number: '', fir_number: '', case_type: '', court_name: '', judge_name: '',
+    case_stage: 'Filed', next_hearing_date: '', next_hearing_time: '10:00 AM', case_description: '',
+    reminder_enabled: true, reminder_types: ['sms', 'call']
   });
   const token = localStorage.getItem('vakildot_token');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchCases();
-    fetchClients();
-  }, []);
+  useEffect(() => { fetchCases(); fetchClients(); }, []);
 
   const fetchCases = async () => {
     try {
@@ -129,7 +130,7 @@ const Cases = ({ userRole = 'lawyer' }) => {
         {userRole === 'lawyer' && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="create-case-button"><Plus className="h-4 w-4 mr-2" />New Case</Button>
+              <Button><Plus className="h-4 w-4 mr-2" />New Case</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Create New Case</DialogTitle></DialogHeader>
@@ -178,7 +179,12 @@ const Cases = ({ userRole = 'lawyer' }) => {
 
                 <div className="space-y-2">
                   <Label>Court Name *</Label>
-                  <Input value={formData.court_name} onChange={(e) => setFormData(p => ({ ...p, court_name: e.target.value }))} placeholder="Delhi District Court" required />
+                  <Select value={formData.court_name} onValueChange={(v) => setFormData(p => ({ ...p, court_name: v }))} required>
+                    <SelectTrigger><SelectValue placeholder="Select court" /></SelectTrigger>
+                    <SelectContent>
+                      {INDIAN_COURTS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -273,7 +279,7 @@ const Cases = ({ userRole = 'lawyer' }) => {
             </CardContent>
           </Card>
         )) : (
-          <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">No cases found.</p></CardContent></Card>
+          <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">No cases found. Create your first case.</p></CardContent></Card>
         )}
       </div>
     </div>
