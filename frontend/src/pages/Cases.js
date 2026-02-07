@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Trash2, Scale } from 'lucide-react';
+import axios from 'axios';
+import { Plus, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { format, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 
-// Firebase Imports
-import { firestore, auth } from '../firebase'; 
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const CASE_TYPES = ['Criminal', 'Civil', 'Constitutional', 'Family', 'Property', 'Corporate', 'Tax', 'Labour', 'Consumer'];
+const CASE_STAGES = ['Filed', 'Under Trial', 'Arguments', 'Judgment Reserved', 'Judgment', 'Appeal', 'Closed'];
+const TIME_SLOTS = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM'];
 
 const Cases = ({ userRole = 'lawyer' }) => {
   const [cases, setCases] = useState([]);
@@ -20,160 +27,254 @@ const Cases = ({ userRole = 'lawyer' }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  
   const [formData, setFormData] = useState({
     client_id: '',
     case_number: '',
+    fir_number: '',
     case_type: '',
     court_name: '',
+    judge_name: '',
     case_stage: 'Filed',
     next_hearing_date: '',
-    case_description: ''
+    next_hearing_time: '10:00 AM',
+    case_description: '',
+    reminder_enabled: true,
+    reminder_types: ['sms', 'call']
   });
-
+  const token = localStorage.getItem('vakildot_token');
   const navigate = useNavigate();
-  const WEBHOOK_URL = "https://hook.eu1.make.com/sk7z17b8jxdwifdxa5736lmbk5bp2c7n";
 
   useEffect(() => {
-    fetchData();
+    fetchCases();
+    fetchClients();
   }, []);
 
-  const fetchData = async () => {
+  const fetchCases = async () => {
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-
-      // 1. Fetch Clients (Dropdown ke liye)
-      const clientQ = query(collection(firestore, 'clients'), where('lawyer_id', '==', currentUser.uid));
-      const clientSnap = await getDocs(clientQ);
-      const clientList = clientSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setClients(clientList);
-
-      // 2. Fetch Cases
-      const caseQ = query(collection(firestore, 'cases'), where('lawyer_id', '==', currentUser.uid));
-      const caseSnap = await getDocs(caseQ);
-      const caseList = caseSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setCases(caseList);
-
+      const response = await axios.get(`${API}/cases`, { headers: { Authorization: `Bearer ${token}` } });
+      setCases(response.data);
     } catch (error) {
-      toast.error('Error fetching data');
+      toast.error('Failed to load cases');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const response = await axios.get(`${API}/clients`, { headers: { Authorization: `Bearer ${token}` } });
+      setClients(response.data);
+    } catch (error) {
+      console.error('Failed to load clients');
     }
   };
 
   const handleCreateCase = async (e) => {
     e.preventDefault();
     try {
-      const currentUser = auth.currentUser;
-      const selectedClient = clients.find(c => c.id === formData.client_id);
-
-      // Save to Firestore
-      const docRef = await addDoc(collection(firestore, 'cases'), {
-        ...formData,
-        client_name: selectedClient?.name || 'Unknown Client',
-        lawyer_id: currentUser.uid,
-        createdAt: serverTimestamp()
-      });
-
-      // Trigger Webhook for Automation
-      await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          client_name: selectedClient?.name,
-          client_phone: selectedClient?.mobile,
-          trigger: 'new_case_created'
-        })
-      });
-
-      toast.success('Case Created & Notification Sent!');
+      await axios.post(`${API}/cases`, formData, { headers: { Authorization: `Bearer ${token}` } });
+      console.log('Webhook Sent Successfully');
+      toast.success('Case created & notification sent!');
       setDialogOpen(false);
-      fetchData(); // Refresh list
+      fetchCases();
+      setFormData({
+        client_id: '', case_number: '', fir_number: '', case_type: '', court_name: '', judge_name: '',
+        case_stage: 'Filed', next_hearing_date: '', next_hearing_time: '10:00 AM', case_description: '',
+        reminder_enabled: true, reminder_types: ['sms', 'call']
+      });
     } catch (error) {
       toast.error('Failed to create case');
     }
   };
 
-  const handleDeleteCase = async (e, id) => {
-    e.stopPropagation();
-    if (window.confirm("Delete this case?")) {
-      await deleteDoc(doc(firestore, 'cases', id));
+  const handleDeleteCase = async (caseId) => {
+    if (!window.confirm('Delete this case?')) return;
+    try {
+      await axios.delete(`${API}/cases/${caseId}`, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Case deleted');
-      fetchData();
+      fetchCases();
+    } catch (error) {
+      toast.error('Failed to delete');
     }
   };
 
-  const filteredCases = cases.filter(c => 
+  const toggleReminderType = (type) => {
+    setFormData(prev => ({
+      ...prev,
+      reminder_types: prev.reminder_types.includes(type)
+        ? prev.reminder_types.filter(t => t !== type)
+        : [...prev.reminder_types, type]
+    }));
+  };
+
+  const filteredCases = cases.filter(c =>
     c.case_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.client_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    c.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.court_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) return <div className="p-10 text-center">Loading Case Files...</div>;
+  const formatDate = (dateStr) => {
+    try { return format(parseISO(dateStr), 'dd/MM/yyyy'); } catch { return dateStr; }
+  };
+
+  if (loading) return <div className="flex items-center justify-center h-64">Loading cases...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Court Cases</h1>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> New Case</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>File New Case</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreateCase} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Select Client</Label>
-                <Select onValueChange={(val) => setFormData({...formData, client_id: val})} required>
-                  <SelectTrigger><SelectValue placeholder="Choose Client" /></SelectTrigger>
-                  <SelectContent>
-                    {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Input placeholder="Case Number (e.g. 123/2026)" onChange={e => setFormData({...formData, case_number: e.target.value})} required />
-              <Input placeholder="Court Name" onChange={e => setFormData({...formData, court_name: e.target.value})} required />
-              <Input type="date" label="Next Hearing" onChange={e => setFormData({...formData, next_hearing_date: e.target.value})} required />
-              <Textarea placeholder="Brief Case Summary" onChange={e => setFormData({...formData, case_description: e.target.value})} />
-              <Button type="submit" className="w-full">Create Case File</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div>
+          <h1 className="text-3xl font-bold">Cases</h1>
+          <p className="text-muted-foreground mt-1">{userRole === 'client' ? 'Your case status' : 'Manage legal cases'}</p>
+        </div>
+        {userRole === 'lawyer' && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button data-testid="create-case-button"><Plus className="h-4 w-4 mr-2" />New Case</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader><DialogTitle>Create New Case</DialogTitle></DialogHeader>
+              <form onSubmit={handleCreateCase} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Client *</Label>
+                  <Select value={formData.client_id} onValueChange={(v) => setFormData(p => ({ ...p, client_id: v }))} required>
+                    <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+                    <SelectContent>
+                      {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.mobile}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Case Number *</Label>
+                    <Input value={formData.case_number} onChange={(e) => setFormData(p => ({ ...p, case_number: e.target.value }))} placeholder="CRL/123/2025" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>FIR Number</Label>
+                    <Input value={formData.fir_number} onChange={(e) => setFormData(p => ({ ...p, fir_number: e.target.value }))} placeholder="Optional" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Case Type *</Label>
+                    <Select value={formData.case_type} onValueChange={(v) => setFormData(p => ({ ...p, case_type: v }))} required>
+                      <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                      <SelectContent>
+                        {CASE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Case Stage *</Label>
+                    <Select value={formData.case_stage} onValueChange={(v) => setFormData(p => ({ ...p, case_stage: v }))} required>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {CASE_STAGES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Court Name *</Label>
+                  <Input value={formData.court_name} onChange={(e) => setFormData(p => ({ ...p, court_name: e.target.value }))} placeholder="Delhi District Court" required />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Judge Name</Label>
+                  <Input value={formData.judge_name} onChange={(e) => setFormData(p => ({ ...p, judge_name: e.target.value }))} placeholder="Hon'ble Justice..." />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Next Hearing Date *</Label>
+                    <Input type="date" value={formData.next_hearing_date} onChange={(e) => setFormData(p => ({ ...p, next_hearing_date: e.target.value }))} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Hearing Time</Label>
+                    <Select value={formData.next_hearing_time} onValueChange={(v) => setFormData(p => ({ ...p, next_hearing_time: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TIME_SLOTS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Case Description</Label>
+                  <Textarea value={formData.case_description} onChange={(e) => setFormData(p => ({ ...p, case_description: e.target.value }))} placeholder="Brief description..." rows={3} />
+                </div>
+
+                <div className="space-y-3 border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Enable Reminders</Label>
+                    <Switch checked={formData.reminder_enabled} onCheckedChange={(c) => setFormData(p => ({ ...p, reminder_enabled: c }))} />
+                  </div>
+                  {formData.reminder_enabled && (
+                    <div className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox checked={formData.reminder_types.includes('sms')} onCheckedChange={() => toggleReminderType('sms')} />
+                        <label className="text-sm">SMS</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox checked={formData.reminder_types.includes('call')} onCheckedChange={() => toggleReminderType('call')} />
+                        <label className="text-sm">Voice Call</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox checked={formData.reminder_types.includes('whatsapp')} onCheckedChange={() => toggleReminderType('whatsapp')} />
+                        <label className="text-sm">WhatsApp</label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit">Create Case</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input className="pl-10" placeholder="Search by case no or client name..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search by case number, client, or court..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {filteredCases.map((c) => (
-          <Card key={c.id} className="cursor-pointer group hover:border-primary transition-all" onClick={() => navigate(`/cases/${c.id}`)}>
-            <CardContent className="p-6 flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                  <Scale size={24} />
-                </div>
+      <div className="space-y-4">
+        {filteredCases.length > 0 ? filteredCases.map((c) => (
+          <Card key={c.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/cases/${c.id}`)}>
+            <CardContent className="pt-6">
+              <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-bold">{c.case_number}</h3>
-                  <p className="text-sm text-muted-foreground">{c.client_name} • {c.court_name}</p>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-xl font-mono font-semibold">{c.case_number}</h3>
+                    <span className="px-3 py-1 bg-muted text-xs rounded">{c.case_stage}</span>
+                  </div>
+                  <p className="text-muted-foreground mb-1">{c.client_name}</p>
+                  <p className="text-sm text-muted-foreground">{c.case_type} • {c.court_name}</p>
+                  {c.judge_name && <p className="text-sm text-muted-foreground">Judge: {c.judge_name}</p>}
                 </div>
-              </div>
-              <div className="text-right flex items-center gap-6">
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase">Next Hearing</p>
-                  <p className="font-mono font-bold text-red-500">{c.next_hearing_date}</p>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground uppercase mb-1">Next Hearing</p>
+                  <p className="text-xl font-mono font-bold text-orange-600">{formatDate(c.next_hearing_date)}</p>
+                  <p className="text-sm text-muted-foreground">{c.next_hearing_time}</p>
+                  {userRole === 'lawyer' && (
+                    <Button variant="ghost" size="sm" className="mt-2 text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteCase(c.id); }}>
+                      <Trash2 className="h-4 w-4 mr-1" />Delete
+                    </Button>
+                  )}
                 </div>
-                <Button variant="ghost" size="icon" className="text-destructive opacity-0 group-hover:opacity-100" onClick={(e) => handleDeleteCase(e, c.id)}>
-                  <Trash2 size={18} />
-                </Button>
               </div>
             </CardContent>
           </Card>
-        ))}
+        )) : (
+          <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">No cases found.</p></CardContent></Card>
+        )}
       </div>
     </div>
   );
