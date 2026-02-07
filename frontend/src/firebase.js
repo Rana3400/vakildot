@@ -1,6 +1,14 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  collection, 
+  addDoc, 
+  serverTimestamp 
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCP_CM8lmBY_X42AyrpbJ8IX29cX0U6sDE",
@@ -69,10 +77,11 @@ export const verifyOTP = async (code) => {
   }
 };
 
+// Existing function for auth-linked users
 export const saveUserToFirestore = async (uid, userData, role) => {
   try {
-    const collection = role === 'lawyer' ? 'lawyers' : 'clients';
-    await setDoc(doc(firestore, collection, uid), { 
+    const collectionName = role === 'lawyer' ? 'lawyers' : 'clients';
+    await setDoc(doc(firestore, collectionName, uid), { 
       ...userData, 
       uid, 
       role, 
@@ -80,6 +89,21 @@ export const saveUserToFirestore = async (uid, userData, role) => {
     });
     return { success: true };
   } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// New function for manual client entry (Auto-ID)
+export const registerNewClient = async (clientData) => {
+  try {
+    const docRef = await addDoc(collection(firestore, 'clients'), {
+      ...clientData,
+      status: 'active',
+      createdAt: serverTimestamp()
+    });
+    return { success: true, id: docRef.id };
+  } catch (error) {
+    console.error("Firebase Error:", error.message);
     return { success: false, error: error.message };
   }
 };

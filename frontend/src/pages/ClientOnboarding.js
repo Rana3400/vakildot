@@ -1,53 +1,39 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { sendOTP, verifyOTP, saveUserToFirestore } from '@/firebase';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Firebase Logic
+import { sendOTP, verifyOTP, firestore } from '@/firebase';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 const ClientOnboarding = ({ onComplete }) => {
   const navigate = useNavigate();
-
-  const [step, setStep] = useState(1); // Step 1: Form, Step 2: OTP
-  const [formData, setFormData] = useState({
-    name: '',
-    mobile: ''
-  });
+  const [step, setStep] = useState(1); 
+  const [formData, setFormData] = useState({ name: '', mobile: '' });
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    
-    if (formData.mobile.length !== 10) {
-      toast.error('Please enter valid 10-digit mobile number');
-      return;
-    }
-    
-    if (!formData.name.trim()) {
-      toast.error('Please enter your name');
-      return;
-    }
+    if (formData.mobile.length !== 10) return toast.error('Enter valid 10-digit mobile');
+    if (!formData.name.trim()) return toast.error('Enter your name');
 
     setLoading(true);
     try {
-      const result = await sendOTP(formData.mobile);
+      const result = await sendOTP(`+91${formData.mobile}`);
       if (result.success) {
-        toast.success('OTP sent to your mobile number!');
+        toast.success('OTP sent!');
         setStep(2);
       } else {
-        toast.error(result.error || 'Failed to send OTP');
+        toast.error(result.error || 'OTP failed');
       }
     } catch (error) {
-      toast.error('Failed to send OTP');
-      console.error(error);
+      toast.error('Service Error');
     } finally {
       setLoading(false);
     }
@@ -55,158 +41,89 @@ const ClientOnboarding = ({ onComplete }) => {
 
   const handleVerifyAndRegister = async (e) => {
     e.preventDefault();
-    
-    if (otp.length !== 6) {
-      toast.error('Please enter 6-digit OTP');
-      return;
-    }
-
     setLoading(true);
+
     try {
       const verifyResult = await verifyOTP(otp);
       if (!verifyResult.success) {
-        toast.error(verifyResult.error || 'Invalid OTP');
+        toast.error('Invalid OTP');
         setLoading(false);
         return;
       }
 
-      const firebaseUser = verifyResult.user;
+      const uid = verifyResult.user.uid;
 
-      const checkResponse = await axios.post(`${API}/auth/check-existing`, { 
-        mobile: formData.mobile 
-      });
-      
-      if (checkResponse.data.exists) {
-        toast.error('Account already exists. Please sign in instead.');
-        setTimeout(() => navigate('/signin'), 2000);
-        return;
+      // 1. Check if user already exists in Firestore
+      const userRef = doc(firestore, 'users', uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        toast.info('Account exists. Logging you in...');
+      } else {
+        // 2. Save new client data to Firestore
+        await setDoc(userRef, {
+          name: formData.name,
+          mobile: formData.mobile,
+          role: 'client',
+          createdAt: serverTimestamp()
+        });
+        toast.success('Profile Registered!');
       }
 
-      // Save user to Firestore
-      const firestoreResult = await saveUserToFirestore(firebaseUser.uid, {
-        name: formData.name,
-        phone: formData.mobile
-      }, 'client');
-      
-      if (!firestoreResult.success) {
-        console.warn('Firestore save warning:', firestoreResult.error);
-      }
-
-      const response = await axios.post(`${API}/auth/register-client`, formData);
-      toast.success('Registration successful!');
-      onComplete(response.data.token, response.data.user);
+      // 3. Complete Login Process
+      const token = await verifyResult.user.getIdToken();
+      onComplete(token, { id: uid, ...formData, role: 'client' });
       navigate('/dashboard');
+
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Registration failed. Please try again.');
-      console.error(error);
+      toast.error('Registration error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 py-12">
+    <div className="min-h-screen bg-muted/30 p-4 py-12">
       <div id="recaptcha-container"></div>
-      
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="flex items-center justify-center gap-2 mb-2">
             <Scale className="h-10 w-10 text-primary" />
-            <span className="text-3xl font-bold font-serif text-primary">VakilDot</span>
+            <span className="text-3xl font-bold text-primary">VakilDot</span>
           </div>
-          <p className="text-muted-foreground">Complete your profile to track your cases</p>
+          <p className="text-muted-foreground text-sm">Client Portal Registration</p>
         </div>
 
-        <Card>
+        <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Client Sign Up</CardTitle>
+            <CardTitle>{step === 1 ? 'Client Sign Up' : 'Verify OTP'}</CardTitle>
             <CardDescription>
-              {step === 1 ? 'Create your client account' : 'Verify your phone number'}
+              {step === 1 ? 'Enter your details to track cases' : 'Enter the code sent to your phone'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {step === 1 ? (
               <form onSubmit={handleFormSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    data-testid="client-name-input"
-                    required
-                  />
+                  <Label>Full Name</Label>
+                  <Input placeholder="Lawyer will see this name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="mobile">Mobile Number *</Label>
-                  <Input
-                    id="mobile"
-                    type="tel"
-                    placeholder="10-digit mobile number"
-                    value={formData.mobile}
-                    onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
-                    maxLength={10}
-                    data-testid="client-mobile-input"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    This number will be used to show your cases
-                  </p>
+                  <Label>Mobile Number</Label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 border border-r-0 rounded-l-md bg-muted text-muted-foreground text-sm">+91</span>
+                    <Input className="rounded-l-none" placeholder="10-digit number" value={formData.mobile} onChange={(e) => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})} maxLength={10} required />
+                  </div>
                 </div>
-
-                <Button type="submit" className="w-full" disabled={loading} data-testid="client-signup-submit">
-                  {loading ? 'Sending OTP...' : 'Sign Up'}
-                </Button>
+                <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Sending...' : 'Request OTP'}</Button>
               </form>
             ) : (
               <form onSubmit={handleVerifyAndRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="otp">Enter OTP *</Label>
-                  <Input
-                    id="otp"
-                    type="text"
-                    placeholder="6-digit OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    maxLength={6}
-                    data-testid="client-otp-input"
-                    required
-                    autoFocus
-                  />
-                  <p className="text-xs text-muted-foreground">OTP sent to +91 {formData.mobile}</p>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={loading} data-testid="client-verify-button">
-                  {loading ? 'Verifying...' : 'Verify & Complete Registration'}
-                </Button>
-
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  className="w-full" 
-                  onClick={() => setStep(1)}
-                  data-testid="client-back-button"
-                >
-                  Back to Edit Details
-                </Button>
+                <Input placeholder="6-digit code" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} maxLength={6} required />
+                <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Verifying...' : 'Complete Sign Up'}</Button>
+                <Button variant="ghost" className="w-full" onClick={() => setStep(1)}>Edit Number</Button>
               </form>
             )}
-
-            <div className="text-center mt-4">
-              <p className="text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <button
-                  onClick={() => navigate('/signin')}
-                  className="text-primary hover:underline font-medium"
-                  data-testid="goto-signin-link"
-                >
-                  Login here
-                </button>
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

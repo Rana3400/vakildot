@@ -56,7 +56,6 @@ markdown-it-py==4.0.0
 MarkupSafe==3.0.3
 mccabe==0.7.0
 mdurl==0.1.2
-motor==3.3.1
 multidict==6.7.0
 mypy==1.19.1
 mypy_extensions==1.1.0
@@ -82,7 +81,6 @@ pydantic_core==2.41.5
 pyflakes==3.4.0
 Pygments==2.19.2
 PyJWT==2.10.1
-pymongo==4.5.0
 pyparsing==3.3.1
 pytest==9.0.2
 python-dateutil==2.9.0.post0
@@ -122,3 +120,10 @@ watchfiles==1.1.1
 websockets==15.0.1
 yarl==1.22.0
 zipp==3.23.0
+fastapi==0.110.1
+uvicorn==0.25.0
+firebase-admin==6.5.0
+python-dotenv==1.2.1
+PyJWT==2.10.1
+python-multipart==0.0.21
+requests==2.32.5
