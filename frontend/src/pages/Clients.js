@@ -53,7 +53,7 @@ const Clients = () => {
     c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || c.mobile?.includes(searchTerm)
   );
 
-  if (loading) return <div className="flex items-center justify-center h-64">Loading clients...</div>;
+  if (loading) return <div className="flex items-center justify-center h-64">Loading...</div>;
 
   return (
     <div className="space-y-6">
