@@ -66,6 +66,8 @@ function App() {
           <Route path="dashboard" element={<Dashboard userRole={userRole} />} />
           <Route path="cases" element={<Cases userRole={userRole} />} />
           <Route path="cases/:caseId" element={<CaseDetail userRole={userRole} />} />
+          <Route path="wallet" element={<Wallet />} />
+          <Route path="consultation/:lawyerId" element={<ConsultationRoom />} />
           {userRole === 'lawyer' && (
             <>
               <Route path="clients" element={<Clients />} />
