@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import CallChat from '@/components/CallChat';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -22,6 +23,8 @@ const ConsultationRoom = () => {
   const [totalCost, setTotalCost] = useState(0);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
   const timerRef = useRef(null);
   const user = JSON.parse(localStorage.getItem('vakildot_user') || '{}');
 
