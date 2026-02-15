@@ -111,22 +111,22 @@ const Welcome = () => {
           
           {/* Filters */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <Select value={selectedState} onValueChange={setSelectedState}>
+            <Select value={selectedState} onValueChange={(v) => setSelectedState(v === 'all' ? '' : v)}>
               <SelectTrigger className="w-[200px] bg-white">
                 <SelectValue placeholder="Select State" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All States</SelectItem>
+                <SelectItem value="all">All States</SelectItem>
                 {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
             
-            <Select value={selectedCourt} onValueChange={setSelectedCourt} disabled={!selectedState}>
+            <Select value={selectedCourt} onValueChange={(v) => setSelectedCourt(v === 'all' ? '' : v)} disabled={!selectedState}>
               <SelectTrigger className="w-[220px] bg-white">
                 <SelectValue placeholder="Select Court Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Courts</SelectItem>
+                <SelectItem value="all">All Courts</SelectItem>
                 {courts.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
