@@ -71,33 +71,25 @@ const Welcome = () => {
 
   // Professional Law Firm Color Classes
   const theme = {
-    // Light mode
     light: {
       bg: 'bg-gradient-to-b from-slate-50 to-white',
       headerBg: 'bg-white/95 backdrop-blur-md',
       cardBg: 'bg-white',
       sectionBg: 'bg-slate-50',
-      sectionAlt: 'bg-gradient-to-br from-slate-900 to-slate-800',
       text: 'text-slate-900',
       textMuted: 'text-slate-600',
       border: 'border-slate-200',
-      accent: 'bg-amber-500',
       accentText: 'text-amber-600',
-      gold: '#D4AF37'
     },
-    // Dark mode  
     dark: {
       bg: 'bg-gradient-to-b from-slate-950 to-slate-900',
       headerBg: 'bg-slate-950/95 backdrop-blur-md',
       cardBg: 'bg-slate-800/80',
       sectionBg: 'bg-slate-900',
-      sectionAlt: 'bg-gradient-to-br from-slate-800 to-slate-900',
       text: 'text-white',
       textMuted: 'text-slate-300',
       border: 'border-slate-700',
-      accent: 'bg-amber-500',
       accentText: 'text-amber-400',
-      gold: '#D4AF37'
     }
   };
 
@@ -105,7 +97,7 @@ const Welcome = () => {
 
   return (
     <div className={`min-h-screen ${t.bg} ${t.text}`}>
-      {/* Header - Professional Law Firm Style */}
+      {/* Header */}
       <header className={`${t.headerBg} ${t.border} border-b sticky top-0 z-50 shadow-sm`}>
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
@@ -138,179 +130,13 @@ const Welcome = () => {
         </div>
       </header>
 
-      {/* Hero Section with Live Consultations */}
-      <section className={`py-16 px-4 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-100 via-white to-slate-100'}`}>
-        <div className="max-w-7xl mx-auto text-center">
-          <Badge className={`mb-6 px-4 py-2 text-sm font-medium ${darkMode ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-            <span className="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse inline-block"></span>
-            {lawyers.length} Lawyers Online Now
-          </Badge>
-          
-          <h1 className={`text-5xl md:text-6xl font-bold mb-4 ${t.text}`}>
-            Live Legal <span className={t.accentText}>Consultations</span>
-          </h1>
-          <p className={`text-xl mb-8 ${t.textMuted}`}>Talk to a Verified Lawyer Now • Pay Per Minute</p>
-          
-          {/* Join Live Stream Button - For Clients */}
-          <Button 
-            data-testid="join-live-stream-btn"
-            size="lg" 
-            className="mb-10 px-10 py-7 text-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/30 transform hover:scale-105 transition-all duration-300"
-            onClick={() => navigate('/signin')}
-          >
-            <Video className="h-6 w-6 mr-3" />
-            Join Live Stream
-          </Button>
-          
-          {/* Filters - 3D Style */}
-          <div className="flex flex-wrap justify-center gap-4 mb-4">
-            <Select value={selectedState || 'all'} onValueChange={(v) => setSelectedState(v === 'all' ? '' : v)}>
-              <SelectTrigger className={`w-[220px] h-12 ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} shadow-md hover:shadow-lg transition-shadow`}>
-                <SelectValue placeholder="Select State" />
-              </SelectTrigger>
-              <SelectContent className={darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-                <SelectItem value="all">All States</SelectItem>
-                {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            
-            <Select value={selectedCourt || 'all'} onValueChange={(v) => setSelectedCourt(v === 'all' ? '' : v)} disabled={!selectedState}>
-              <SelectTrigger className={`w-[240px] h-12 ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} shadow-md hover:shadow-lg transition-shadow`}>
-                <SelectValue placeholder="Select Court" />
-              </SelectTrigger>
-              <SelectContent className={darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-                <SelectItem value="all">All Courts</SelectItem>
-                {courts.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </section>
-
-      {/* Live Lawyers Slider - 3D Cards */}
-      <section id="lawyers" className={`py-12 px-4 ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-4 w-4 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
-            <h2 className={`text-3xl font-bold ${t.text}`}>Live Now</h2>
-            <Badge className="bg-red-500 text-white px-3 py-1">{lawyers.length} Online</Badge>
-          </div>
-
-          <div className="relative">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className={`absolute -left-2 top-1/2 -translate-y-1/2 z-10 rounded-full h-14 w-14 shadow-xl ${darkMode ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : 'bg-white hover:bg-slate-50'}`}
-              onClick={() => scrollContainer('left')}
-            >
-              <ChevronLeft className="h-7 w-7" />
-            </Button>
-
-            <div id="lawyers-slider" className="flex gap-6 overflow-x-auto px-4 py-6" style={{ scrollbarWidth: 'none' }}>
-              {lawyers.map(lawyer => (
-                <Card 
-                  key={lawyer.id} 
-                  className={`w-[300px] flex-shrink-0 cursor-pointer overflow-hidden transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 ${
-                    darkMode 
-                      ? 'bg-gradient-to-b from-slate-800 to-slate-900 border-slate-700 hover:border-amber-500/50' 
-                      : 'bg-white border-slate-200 hover:border-amber-500'
-                  } shadow-xl hover:shadow-2xl`}
-                  style={{ 
-                    boxShadow: darkMode 
-                      ? '0 20px 40px -15px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)' 
-                      : '0 20px 40px -15px rgba(0,0,0,0.15)' 
-                  }}
-                  onClick={() => navigate('/signin')}
-                >
-                  {/* Card Header with Profile Image */}
-                  <div className={`relative h-52 ${darkMode ? 'bg-gradient-to-br from-slate-700 to-slate-800' : 'bg-gradient-to-br from-slate-100 to-slate-200'}`}>
-                    {/* 3D Avatar with Photo Support */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <div className={`absolute inset-0 rounded-full ${darkMode ? 'bg-amber-500/20' : 'bg-amber-100'} blur-xl scale-110`}></div>
-                        <Avatar className="h-36 w-36 border-4 border-white shadow-2xl relative z-10" style={{ boxShadow: '0 15px 30px -10px rgba(0,0,0,0.3)' }}>
-                          {lawyer.profile_photo ? (
-                            <AvatarImage src={lawyer.profile_photo} alt={lawyer.name} className="object-cover" />
-                          ) : null}
-                          <AvatarFallback className={`text-4xl font-bold ${darkMode ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-slate-900' : 'bg-gradient-to-br from-slate-800 to-slate-900 text-white'}`}>
-                            {lawyer.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                    </div>
-                    
-                    {/* Live Badge - 3D Effect */}
-                    <Badge className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1.5 shadow-lg shadow-red-500/50">
-                      <span className="h-2 w-2 bg-white rounded-full mr-2 animate-pulse"></span>
-                      LIVE
-                    </Badge>
-                    
-                    {/* Verified Badge */}
-                    {lawyer.is_verified && (
-                      <Badge className={`absolute top-4 right-4 ${darkMode ? 'bg-amber-500 text-slate-900' : 'bg-slate-900 text-white'} px-3 py-1.5 shadow-lg`}>
-                        <Shield className="h-3 w-3 mr-1" />
-                        VERIFIED
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {/* Card Content */}
-                  <CardContent className="pt-5 pb-6">
-                    <h3 className={`font-bold text-xl mb-1 ${t.text}`}>{lawyer.name}</h3>
-                    <p className={`text-sm ${t.textMuted} flex items-center gap-1`}>
-                      <Gavel className="h-3 w-3" />
-                      {lawyer.court}
-                    </p>
-                    
-                    {/* Stats Row */}
-                    <div className={`flex items-center justify-between mt-4 py-3 border-t border-b ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
-                        <span className={`font-semibold ${t.text}`}>{lawyer.rating}</span>
-                      </div>
-                      <div className={`flex items-center gap-1 ${t.textMuted}`}>
-                        <Clock className="h-4 w-4" />
-                        <span className="text-sm">Available</span>
-                      </div>
-                      <div className="text-right">
-                        <span className={`text-xl font-bold ${t.accentText}`}>₹{lawyer.rate_per_minute}</span>
-                        <span className={`text-xs ${t.textMuted}`}>/min</span>
-                      </div>
-                    </div>
-                    
-                    {/* Join Button - 3D Effect */}
-                    <Button 
-                      className={`w-full mt-4 h-12 text-base font-semibold transform transition-all duration-200 ${
-                        darkMode 
-                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 shadow-lg shadow-amber-500/30' 
-                          : 'bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white shadow-lg shadow-slate-900/30'
-                      }`}
-                    >
-                      <Video className="h-5 w-5 mr-2" />
-                      Join Stream
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className={`absolute -right-2 top-1/2 -translate-y-1/2 z-10 rounded-full h-14 w-14 shadow-xl ${darkMode ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : 'bg-white hover:bg-slate-50'}`}
-              onClick={() => scrollContainer('right')}
-            >
-              <ChevronRight className="h-7 w-7" />
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Join VakilDot Cards */}
-      <section className={`py-16 px-4 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      {/* SECTION 1: Join VakilDot Today - FIRST */}
+      <section className={`py-20 px-4 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-100 via-white to-slate-100'}`}>
         <div className="max-w-5xl mx-auto">
-          <h2 className={`text-4xl font-bold text-center mb-3 ${t.text}`}>Join VakilDot Today</h2>
-          <p className={`text-center mb-12 ${t.textMuted}`}>India's Premier Legal Consultation Platform</p>
+          <h1 className={`text-5xl md:text-6xl font-bold text-center mb-4 ${t.text}`}>
+            Join <span className={t.accentText}>VakilDot</span> Today
+          </h1>
+          <p className={`text-center text-xl mb-12 ${t.textMuted}`}>India's Premier Legal Consultation Platform</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Lawyer Card - 3D */}
@@ -387,7 +213,163 @@ const Welcome = () => {
         </div>
       </section>
 
-      {/* Asset Recovery Section - Professional */}
+      {/* SECTION 2: Live Legal Consultations */}
+      <section className={`py-16 px-4 ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
+        <div className="max-w-7xl mx-auto text-center">
+          <Badge className={`mb-6 px-4 py-2 text-sm font-medium ${darkMode ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+            <span className="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse inline-block"></span>
+            {lawyers.length} Lawyers Online Now
+          </Badge>
+          
+          <h2 className={`text-4xl md:text-5xl font-bold mb-4 ${t.text}`}>
+            Live Legal <span className={t.accentText}>Consultations</span>
+          </h2>
+          <p className={`text-xl mb-8 ${t.textMuted}`}>Talk to a Verified Lawyer Now • Pay Per Minute</p>
+          
+          {/* Join Live Stream Button */}
+          <Button 
+            data-testid="join-live-stream-btn"
+            size="lg" 
+            className="mb-10 px-10 py-7 text-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/30 transform hover:scale-105 transition-all duration-300"
+            onClick={() => navigate('/signin')}
+          >
+            <Video className="h-6 w-6 mr-3" />
+            Join Live Stream
+          </Button>
+          
+          {/* Filters */}
+          <div className="flex flex-wrap justify-center gap-4 mb-4">
+            <Select value={selectedState || 'all'} onValueChange={(v) => setSelectedState(v === 'all' ? '' : v)}>
+              <SelectTrigger className={`w-[220px] h-12 ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} shadow-md`}>
+                <SelectValue placeholder="Select State" />
+              </SelectTrigger>
+              <SelectContent className={darkMode ? 'bg-slate-800 border-slate-700' : ''}>
+                <SelectItem value="all">All States</SelectItem>
+                {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            
+            <Select value={selectedCourt || 'all'} onValueChange={(v) => setSelectedCourt(v === 'all' ? '' : v)} disabled={!selectedState}>
+              <SelectTrigger className={`w-[240px] h-12 ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} shadow-md`}>
+                <SelectValue placeholder="Select Court" />
+              </SelectTrigger>
+              <SelectContent className={darkMode ? 'bg-slate-800 border-slate-700' : ''}>
+                <SelectItem value="all">All Courts</SelectItem>
+                {courts.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: Live Lawyers Slider */}
+      <section id="lawyers" className={`py-12 px-4 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-4 w-4 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
+            <h2 className={`text-3xl font-bold ${t.text}`}>Live Now</h2>
+            <Badge className="bg-red-500 text-white px-3 py-1">{lawyers.length} Online</Badge>
+          </div>
+
+          <div className="relative">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className={`absolute -left-2 top-1/2 -translate-y-1/2 z-10 rounded-full h-14 w-14 shadow-xl ${darkMode ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : 'bg-white hover:bg-slate-50'}`}
+              onClick={() => scrollContainer('left')}
+            >
+              <ChevronLeft className="h-7 w-7" />
+            </Button>
+
+            <div id="lawyers-slider" className="flex gap-6 overflow-x-auto px-4 py-6" style={{ scrollbarWidth: 'none' }}>
+              {lawyers.map(lawyer => (
+                <Card 
+                  key={lawyer.id} 
+                  className={`w-[300px] flex-shrink-0 cursor-pointer overflow-hidden transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 ${
+                    darkMode 
+                      ? 'bg-gradient-to-b from-slate-800 to-slate-900 border-slate-700 hover:border-amber-500/50' 
+                      : 'bg-white border-slate-200 hover:border-amber-500'
+                  } shadow-xl hover:shadow-2xl`}
+                  style={{ boxShadow: darkMode ? '0 20px 40px -15px rgba(0,0,0,0.5)' : '0 20px 40px -15px rgba(0,0,0,0.15)' }}
+                  onClick={() => navigate('/signin')}
+                >
+                  {/* Card Header with Profile */}
+                  <div className={`relative h-52 ${darkMode ? 'bg-gradient-to-br from-slate-700 to-slate-800' : 'bg-gradient-to-br from-slate-100 to-slate-200'}`}>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="relative">
+                        <div className={`absolute inset-0 rounded-full ${darkMode ? 'bg-amber-500/20' : 'bg-amber-100'} blur-xl scale-110`}></div>
+                        <Avatar className="h-36 w-36 border-4 border-white shadow-2xl relative z-10">
+                          {lawyer.profile_photo && <AvatarImage src={lawyer.profile_photo} alt={lawyer.name} className="object-cover" />}
+                          <AvatarFallback className={`text-4xl font-bold ${darkMode ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-slate-900' : 'bg-gradient-to-br from-slate-800 to-slate-900 text-white'}`}>
+                            {lawyer.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </div>
+                    
+                    <Badge className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1.5 shadow-lg shadow-red-500/50">
+                      <span className="h-2 w-2 bg-white rounded-full mr-2 animate-pulse"></span>
+                      LIVE
+                    </Badge>
+                    
+                    {lawyer.is_verified && (
+                      <Badge className={`absolute top-4 right-4 ${darkMode ? 'bg-amber-500 text-slate-900' : 'bg-slate-900 text-white'} px-3 py-1.5 shadow-lg`}>
+                        <Shield className="h-3 w-3 mr-1" />
+                        VERIFIED
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <CardContent className="pt-5 pb-6">
+                    <h3 className={`font-bold text-xl mb-1 ${t.text}`}>{lawyer.name}</h3>
+                    <p className={`text-sm ${t.textMuted} flex items-center gap-1`}>
+                      <Gavel className="h-3 w-3" />
+                      {lawyer.court}
+                    </p>
+                    
+                    <div className={`flex items-center justify-between mt-4 py-3 border-t border-b ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+                        <span className={`font-semibold ${t.text}`}>{lawyer.rating}</span>
+                      </div>
+                      <div className={`flex items-center gap-1 ${t.textMuted}`}>
+                        <Clock className="h-4 w-4" />
+                        <span className="text-sm">Available</span>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-xl font-bold ${t.accentText}`}>₹{lawyer.rate_per_minute}</span>
+                        <span className={`text-xs ${t.textMuted}`}>/min</span>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      className={`w-full mt-4 h-12 text-base font-semibold ${
+                        darkMode 
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 shadow-lg shadow-amber-500/30' 
+                          : 'bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white shadow-lg shadow-slate-900/30'
+                      }`}
+                    >
+                      <Video className="h-5 w-5 mr-2" />
+                      Join Stream
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className={`absolute -right-2 top-1/2 -translate-y-1/2 z-10 rounded-full h-14 w-14 shadow-xl ${darkMode ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : 'bg-white hover:bg-slate-50'}`}
+              onClick={() => scrollContainer('right')}
+            >
+              <ChevronRight className="h-7 w-7" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4: Asset Recovery */}
       <section className={`py-20 px-4 ${darkMode ? 'bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800' : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'}`}>
         <div className="max-w-6xl mx-auto">
           <Badge className="block w-fit mx-auto mb-6 bg-amber-500/20 text-amber-400 border-amber-500/30 px-4 py-1.5">
@@ -433,7 +415,7 @@ const Welcome = () => {
         </div>
       </section>
 
-      {/* About Section */}
+      {/* SECTION 5: About */}
       <section id="about" className={`py-20 px-4 ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
         <div className="max-w-4xl mx-auto text-center">
           <div className={`inline-flex items-center justify-center p-4 rounded-2xl mb-8 ${darkMode ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
@@ -449,7 +431,7 @@ const Welcome = () => {
         </div>
       </section>
 
-      {/* Footer - Professional */}
+      {/* Footer */}
       <footer className={`py-12 px-4 ${darkMode ? 'bg-slate-900 border-t border-slate-800' : 'bg-slate-900'}`}>
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
