@@ -20,6 +20,8 @@ import Layout from '@/components/Layout';
 import Wallet from '@/pages/Wallet';
 import ConsultationRoom from '@/pages/ConsultationRoom';
 import AssetRecovery from '@/pages/AssetRecovery';
+import AdminPanel from '@/pages/AdminPanel';
+import CallHistory from '@/pages/CallHistory';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('vakildot_token'));
