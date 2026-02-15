@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Scale, LayoutDashboard, Briefcase, Users, FileText, Calendar, IndianRupee, Settings, Menu, X, LogOut } from 'lucide-react';
+import { Scale, LayoutDashboard, Briefcase, Users, FileText, Calendar, IndianRupee, Settings, Menu, X, LogOut, Wallet, Video } from 'lucide-react';
 
 const Layout = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -12,6 +12,7 @@ const Layout = ({ user, onLogout }) => {
   const allMenuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['lawyer', 'client'] },
     { path: '/cases', icon: Briefcase, label: 'Cases', roles: ['lawyer', 'client'] },
+    { path: '/wallet', icon: Wallet, label: 'Wallet', roles: ['lawyer', 'client'] },
     { path: '/clients', icon: Users, label: 'Clients', roles: ['lawyer'] },
     { path: '/documents', icon: FileText, label: 'Documents', roles: ['lawyer'] },
     { path: '/calendar', icon: Calendar, label: 'Calendar', roles: ['lawyer'] },
