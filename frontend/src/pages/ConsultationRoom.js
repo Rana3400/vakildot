@@ -135,12 +135,23 @@ const ConsultationRoom = () => {
       timerRef.current = null;
     }
     setInCall(false);
+    setChatOpen(false);
+    
+    // End call session in backend
+    if (sessionId) {
+      try {
+        await axios.post(`${API}/calls/end?session_id=${sessionId}&duration_seconds=${timer}&total_amount=${totalCost}`);
+      } catch (e) {
+        console.error('Failed to end session');
+      }
+    }
     
     toast.success(`Call ended. Total: ₹${totalCost}`);
     
     // Show summary
     setTimeout(() => {
       alert(`Call Summary:\nDuration: ${formatTime(timer)}\nTotal Cost: ₹${totalCost}\nLawyer Share (80%): ₹${(totalCost * 0.8).toFixed(2)}\nPlatform Fee (20%): ₹${(totalCost * 0.2).toFixed(2)}`);
+      navigate('/call-history');
     }, 500);
   };
 
