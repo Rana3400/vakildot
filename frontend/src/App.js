@@ -62,6 +62,7 @@ function App() {
         <Route path="/signin" element={token ? <Navigate to="/dashboard" /> : <SignIn onLogin={handleLogin} />} />
         <Route path="/signup/lawyer" element={token ? <Navigate to="/dashboard" /> : <LawyerOnboarding onComplete={handleLogin} />} />
         <Route path="/signup/client" element={token ? <Navigate to="/dashboard" /> : <ClientOnboarding onComplete={handleLogin} />} />
+        <Route path="/asset-recovery" element={<AssetRecovery />} />
         
         <Route path="/" element={<PrivateRoute><Layout user={user} onLogout={handleLogout} /></PrivateRoute>}>
           <Route path="dashboard" element={<Dashboard userRole={userRole} />} />
