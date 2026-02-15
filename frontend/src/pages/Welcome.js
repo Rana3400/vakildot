@@ -132,7 +132,18 @@ const Welcome = () => {
       <section className={`py-12 px-4 ${darkMode ? 'bg-black' : 'bg-gray-100'}`}>
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-2">Live Legal Consultations</h2>
-          <p className={`mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Talk to a Verified Lawyer Now</p>
+          <p className={`mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Talk to a Verified Lawyer Now</p>
+          
+          {/* Join Live Stream Button - For Clients */}
+          <Button 
+            data-testid="join-live-stream-btn"
+            size="lg" 
+            className={`mb-8 px-8 py-6 text-lg ${darkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} text-white`}
+            onClick={() => navigate('/signin')}
+          >
+            <Video className="h-5 w-5 mr-2" />
+            Join Live Stream
+          </Button>
           
           {/* Filters */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
