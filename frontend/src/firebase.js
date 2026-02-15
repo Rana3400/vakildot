@@ -197,4 +197,4 @@ export const registerNewClient = async (clientData) => {
   }
 };
 
-export default app;s
+export default app;
