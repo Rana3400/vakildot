@@ -72,6 +72,9 @@ const Dashboard = () => {
         <p className="text-muted-foreground">Welcome back! Here's your practice overview.</p>
       </div>
 
+      {/* Live Lawyers Slider */}
+      <LiveLawyersSlider />
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="stats-grid">
         {statCards.map((stat, index) => {
