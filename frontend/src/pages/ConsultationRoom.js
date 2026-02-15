@@ -323,6 +323,19 @@ const ConsultationRoom = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Chat Component */}
+      {sessionId && (
+        <CallChat
+          sessionId={sessionId}
+          userId={user.id}
+          userName={user.name}
+          userRole={user.user_role}
+          isOpen={chatOpen}
+          onClose={() => setChatOpen(false)}
+          otherPartyName={lawyer?.name}
+        />
+      )}
     </div>
   );
 };
