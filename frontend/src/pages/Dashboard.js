@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, Users, Calendar, IndianRupee, AlertCircle, TrendingUp } from 'lucide-react';
+import { Briefcase, Users, Calendar, IndianRupee, AlertCircle, TrendingUp, Video } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { format, parseISO } from 'date-fns';
 import { toast } from 'sonner';
-import LiveLawyersSlider from '@/components/LiveLawyersSlider';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Dashboard = () => {
+const Dashboard = ({ userRole = 'lawyer' }) => {
   const [stats, setStats] = useState(null);
   const [recentActivity, setRecentActivity] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
   const token = localStorage.getItem('vakildot_token');
+  const user = JSON.parse(localStorage.getItem('vakildot_user') || '{}');
 
   useEffect(() => {
     fetchDashboardData();
@@ -22,39 +25,41 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const [statsRes, activityRes] = await Promise.all([
-        axios.get(`${API}/dashboard/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API}/dashboard/recent-activity`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        axios.get(`${API}/dashboard/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/dashboard/recent-activity`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
-
       setStats(statsRes.data);
       setRecentActivity(activityRes.data);
     } catch (error) {
-      toast.error('Failed to load dashboard data');
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
+  const toggleLiveStatus = async (checked) => {
+    setIsLive(checked);
+    try {
+      await axios.post(`${API}/live/status/go-live`, {
+        lawyer_id: user.id,
+        is_live: checked,
+        rate_per_minute: 30
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(checked ? 'You are now LIVE!' : 'You are now offline');
+    } catch (e) {
+      toast.error('Failed to update status');
+    }
+  };
+
   const statCards = [
     { title: 'Total Cases', value: stats?.total_cases || 0, icon: Briefcase, color: 'text-primary' },
-    { title: 'Active Cases', value: stats?.active_cases || 0, icon: TrendingUp, color: 'text-success' },
-    { title: 'Total Clients', value: stats?.total_clients || 0, icon: Users, color: 'text-chart-3' },
-    { title: "Today's Hearings", value: stats?.todays_hearings || 0, icon: Calendar, color: 'text-tarikh-urgent' },
-    { title: 'This Week', value: stats?.this_week_hearings || 0, icon: Calendar, color: 'text-tarikh-upcoming' },
-    { title: 'Pending Invoices', value: stats?.pending_invoices || 0, icon: IndianRupee, color: 'text-destructive' },
+    { title: 'Active Cases', value: stats?.active_cases || 0, icon: TrendingUp, color: 'text-green-600' },
+    { title: 'Total Clients', value: stats?.total_clients || 0, icon: Users, color: 'text-blue-600' },
+    { title: "Today's Hearings", value: stats?.todays_hearings || 0, icon: Calendar, color: 'text-orange-600' },
   ];
 
   const formatDate = (dateStr) => {
-    try {
-      return format(parseISO(dateStr), 'dd/MM/yyyy');
-    } catch {
-      return dateStr;
-    }
+    try { return format(parseISO(dateStr), 'dd/MM/yyyy'); } catch { return dateStr; }
   };
 
   if (loading) {
