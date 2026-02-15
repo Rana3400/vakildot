@@ -72,13 +72,20 @@ const ConsultationRoom = () => {
     }
 
     try {
+      const channelName = `vakildot_${lawyerId}_${Date.now()}`;
+      const newSessionId = `session_${Date.now()}_${user.id?.slice(0, 8)}`;
+      
+      // Start call session for history
+      await axios.post(`${API}/calls/start?session_id=${newSessionId}&client_id=${user.id}&client_name=${user.name}&lawyer_id=${lawyerId}&lawyer_name=${lawyer.name}&channel_name=${channelName}&rate_per_minute=${lawyer.rate_per_minute}`);
+      
       const res = await axios.post(`${API}/live/session/start`, {
         client_id: user.id,
         lawyer_id: lawyerId,
-        channel_name: `vakildot_${lawyerId}_${Date.now()}`
+        channel_name: channelName
       });
 
       if (res.data.success) {
+        setSessionId(newSessionId);
         setInCall(true);
         toast.success('Call connected!');
         
