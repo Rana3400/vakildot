@@ -394,6 +394,10 @@ async def get_activity(user=Depends(get_current_user)):
     
     return {"recent_cases": cases_data[:5], "upcoming_hearings": upcoming}
 
+# Import Live Consultation Module
+from live_consultation import router as live_router
+app.include_router(live_router)
+
 app.include_router(api_router)
 
 if __name__ == "__main__":
