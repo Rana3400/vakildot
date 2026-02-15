@@ -291,9 +291,10 @@ const ConsultationRoom = () => {
 
             {inCall && (
               <Button 
-                variant="secondary"
+                variant={chatOpen ? "default" : "secondary"}
                 size="lg"
-                className="rounded-full h-14 w-14"
+                className={`rounded-full h-14 w-14 ${chatOpen ? 'bg-amber-500 hover:bg-amber-600' : ''}`}
+                onClick={() => setChatOpen(!chatOpen)}
               >
                 <MessageSquare className="h-6 w-6" />
               </Button>
