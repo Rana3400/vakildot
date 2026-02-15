@@ -19,6 +19,7 @@ import Settings from '@/pages/Settings';
 import Layout from '@/components/Layout';
 import Wallet from '@/pages/Wallet';
 import ConsultationRoom from '@/pages/ConsultationRoom';
+import AssetRecovery from '@/pages/AssetRecovery';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('vakildot_token'));
