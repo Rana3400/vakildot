@@ -398,6 +398,23 @@ async def get_activity(user=Depends(get_current_user)):
 from live_consultation import router as live_router
 app.include_router(live_router)
 
+# Asset Recovery Leads
+@api_router.post("/asset-recovery/leads")
+async def create_asset_lead(data: dict):
+    lead_id = str(uuid.uuid4())
+    data['id'] = lead_id
+    data['status'] = 'new'
+    data['created_at'] = datetime.now(timezone.utc).isoformat()
+    db.collection('asset_recovery_leads').document(lead_id).set(data)
+    return {"success": True, "lead_id": lead_id}
+
+@api_router.get("/asset-recovery/leads")
+async def get_asset_leads(user=Depends(get_current_user)):
+    if user.get('user_role') != 'lawyer':
+        raise HTTPException(status_code=403, detail="Access denied")
+    docs = db.collection('asset_recovery_leads').stream()
+    return [doc.to_dict() for doc in docs]
+
 app.include_router(api_router)
 
 if __name__ == "__main__":
