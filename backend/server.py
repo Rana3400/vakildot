@@ -398,6 +398,22 @@ async def get_activity(user=Depends(get_current_user)):
 from live_consultation import router as live_router
 app.include_router(live_router)
 
+# Import Push Notifications Module
+from push_notifications import router as notifications_router
+app.include_router(notifications_router)
+
+# Import Chat Module
+from chat_module import router as chat_router
+app.include_router(chat_router)
+
+# Import Call History Module
+from call_history import router as calls_router
+app.include_router(calls_router)
+
+# Import Admin Panel Module
+from admin_panel import router as admin_router
+app.include_router(admin_router)
+
 # Asset Recovery Leads
 @api_router.post("/asset-recovery/leads")
 async def create_asset_lead(data: dict):
