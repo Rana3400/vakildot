@@ -1,222 +1,199 @@
-<analysis>
-**original_problem_statement:**
-The user wants to build a FULL INDIAN LAWYER MANAGEMENT APPLICATION named VakilDesk.
+<analysis>**original_problem_statement:**
+The user wants to build a comprehensive lawyer management application named VakilDot (originally VakilDesk). The project has evolved significantly from a simple case management tool to a real-time legal consultation marketplace modeled after AstroTalk.
 
 **PRODUCT REQUIREMENTS:**
-- **Vision:** Digitize lawyers' daily work, reduce manual record-keeping, and prevent missed court hearings.
-- **Users:** Individual advocates, law firms, junior advocates, and clerks.
-- **Core Features:**
-    - **Lawyer & Client Management:** Registration, profiles, and linking cases to clients.
-    - **Case Management:** Create/track cases with details like case number, court, judge, and hearing dates.
-    - **Reminder System:** Automated Voice Call (IVR), SMS, and WhatsApp reminders for court dates.
-    - **Document Management:** Securely upload and organize case-related documents.
-    - **Billing & Fees:** Invoice generation and payment tracking.
-    - **User Roles:** Differentiated access for Senior Advocates, Junior Advocates, and Clerks.
-- **Technology Stack (as requested initially):** Mobile App (Flutter), Backend (Node.js/Django), DB (PostgreSQL), and various APIs for communication (Exotel, Gupshup). The agent has implemented a web app using FastAPI, React, and MongoDB.
-- **Recent Additions (from user conversation):**
-    - Role-based access for 'Lawyer' and 'Client' roles.
-    - Firebase Phone OTP for authentication.
-    - User data (profiles) stored in Firestore, while case data remains in MongoDB.
-    - Webhook integration with Make.com for notifications.
+- **Core Vision:** A live-streaming platform where verified lawyers provide pay-per-minute consultations.
+- **Key Features:**
+    - **Live Consultation Marketplace:** An AstroTalk style homepage showing currently online lawyers, filterable by jurisdiction.
+    - **Pay-Per-Minute Billing:** A wallet system for clients, with automated minute-by-minute charge deductions during calls and an 80/20 revenue split between the lawyer and the platform.
+    - **Real-time Streaming:** 1-to-1 video/chat consultations using the Agora SDK.
+    - **Lawyer Dashboard:** A Go-Live toggle for lawyers to manage their online presence.
+    - **Asset Recovery Niche:** A dedicated module with a landing page, eligibility quiz, and lead capture form for asset recovery services.
+    - **Standard Features:** User authentication (Lawyer/Client roles), case management, client management, and document uploads.
+- **Technology Stack:**
+    - **Frontend:** React, TailwindCSS, Shadcn UI
+    - **Backend:** FastAPI (Python)
+    - **Database (Hybrid):**
+        - **Firestore:** For user profiles, auth, cases, documents, and real-time lawyer status.
+        - **PostgreSQL (via Supabase):** For transactional data like user wallets and billing history.
+    - **Integrations:** Agora (video), Make.com (notifications), Razorpay (dummy implementation for payments).
 
-**User's preferred language**: English
+**User's preferred language**: The user communicates in a mix of English and Hindi. The next agent should prioritize English for technical clarity but can use Hindi for explanations to ensure understanding.
 
 **what currently exists?**
-A full-stack web application (FastAPI backend, React frontend) for lawyer management named VakilDesk. The application features:
-- A multi-step, role-based entry flow (Welcome screen -> Lawyer/Client signup -> Login).
-- User authentication is partially migrated to Firebase Phone OTP, but is currently in a non-functional state.
-- Backend support for creating/viewing/deleting cases, stored in MongoDB.
-- Role-based access control where clients can only view cases linked to their phone number.
-- A Communication Hub on the client detail page that triggers notifications (SMS, WhatsApp, Voice) via a Make.com webhook.
-- A  endpoint for deployment health checks.
+- A full-stack application named VakilDot with a React frontend and FastAPI backend.
+- The architecture has been migrated from MongoDB to a hybrid model using **Firestore** for general data and **Supabase (PostgreSQL)** for financial data.
+- **Implemented Features:**
+    - Role-based user signup/login (Lawyer, Client) via Firebase Phone OTP.
+    - The backend has been rewritten to use Firestore for all primary data (cases, clients, documents).
+    - An initial, but incomplete, implementation of the AstroTalk live consultation feature exists. This includes backend modules (), frontend pages (, , ), and API endpoints.
+    - A dedicated Asset Recovery page () and a corresponding lead capture endpoint have been created.
+    - The lawyer signup form includes advanced fields (Practice Area, Court, etc.).
+- The necessary API keys for Firebase, Supabase, and Agora have been provided by the user and are configured in  files.
 
 **Last working item**:
-- **Last item agent was working:** The agent was beginning to implement the user's request to finalize the Firebase integration. This involves using a CDN for the Firebase SDK, storing user profiles in Firestore, and adding a Make.com webhook trigger to the Add Case form.
+- **Last item agent was working:** The agent was executing a large All-in-One user command to build out the final AstroTalk vision. This involved a major UI overhaul of the homepage (), creating the Asset Recovery module, and implementing backend logic for billing splits and lawyer live status. The agent created/modified numerous files but failed to produce the correct visual outcome for the homepage, leading to a blank page error which was then fixed. The user is still not satisfied with the UI.
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
 - **Which testing method agent to use?** both
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-  - **Issue 1:** The authentication flow is broken due to a mid-flight migration to Firebase. Sign-up and Sign-in pages are created but not fully wired to the Firebase OTP logic. (Priority: P0)
+- **Issue 1:** Homepage UI does not match the user's vision (P0)
+- **Issue 2:** Incomplete implementation and testing of the All-in-One live consultation feature (P1)
+- **Issue 3:** Browser caching issues on the deployed site causing user confusion (P2)
 
-  **Issues Detail:**
-  - **Issue 1: Incomplete Firebase Authentication Integration**
-     - **Attempted fixes:** The agent installed the  npm package and created a  config file. It added placeholder logic and  divs to the onboarding and sign-in components. However, this was incomplete and did not follow the user's latest instruction to use the CDN.
-     - **Next debug checklist:**
-       1. Remove the  dependency from  and delete  and  to ensure a clean state, then run yarn install v1.22.22
-[1/4] Resolving packages...
-[2/4] Fetching packages...
-[3/4] Linking dependencies...
-[4/4] Building fresh packages...
-success Saved lockfile.
-Done in 0.18s..
-       2. Add the Firebase script tags provided by the user to .
-       3. Modify  to initialize Firebase from the global  object and export the  service. Add  for verification.
-       4. In , , and , implement the full Firebase phone authentication flow ( , , and ).
-       5. On successful authentication, use the Firebase SDK to save user data (Name, Email, Phone, Role) to the corresponding **Firestore** collection ( or ).
-       6. After successful login/signup, redirect the user to their dashboard and store the auth token in local storage.
-     - **Why fix this issue and what will be achieved with the fix?** This will complete the user's request for a secure, professional phone-based authentication system, which is critical for the app's functionality.
-     - **Status:** IN PROGRESS
-     - **Is recurring issue?** Y
-     - **Should Test frontend/backend/both after fix?** both
-     - **Blocked on other issue:** None
+**Issues Detail:**
+- **Issue 1: Homepage UI does not match the user's vision**
+    - **Attempted fixes:** The agent has rewritten  multiple times, but the result is either a blank page or a layout that doesn't match the user's AstroTalk requirement (i.e., the live lawyer slider is not visible to unauthenticated users).
+    - **Next debug checklist:**
+        1.  Re-examine the user's image artifact for the desired homepage layout.
+        2.  Inspect  to ensure the  component is rendered unconditionally on page load.
+        3.  Verify the API call to  is being made and does not require authentication.
+        4.  Confirm the  route in  correctly renders the  component without any auth guards.
+        5.  Take a screenshot of  to validate the fix.
+    - **Why fix this issue and what will be achieved with the fix?** This is the main entry point for the app's core feature. Fixing it is critical to meet the user's primary requirement.
+    - **Status:** IN PROGRESS
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** frontend
+    - **Blocked on other issue:** None
+
+- **Issue 2: Incomplete implementation and testing of the All-in-One live consultation feature**
+    - **Attempted fixes:** The agent has created the necessary files and endpoints, but the end-to-end functionality is untested.
+    - **Next debug checklist:**
+        1.  Test the lawyer's Go-Live toggle and verify the status change in the Firestore  collection.
+        2.  Test the client's dummy wallet recharge and verify the balance update in the Supabase  table.
+        3.  Test the full call flow: client joins a live lawyer's stream, Agora connection is made, and wallet balance decreases.
+        4.  Verify that after the call, a record is created in the Supabase  table with the correct 80/20 revenue split.
+        5.  Test the Asset Recovery quiz and lead form submission.
+    - **Why fix this issue and what will be achieved with the fix?** To deliver the complete, functional marketplace feature requested by the user.
+    - **Status:** IN PROGRESS
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?** both
+    - **Blocked on other issue:** Issue 1
+
+- **Issue 3: Browser Caching Issues on the deployed site**
+    - **Attempted fixes:** The agent added cache-control meta tags to . This is likely insufficient.
+    - **Next debug checklist:**
+        1.  This is a deployment environment issue. The agent's primary role is to ensure the local build works correctly.
+        2.  Advise the user that a one-time hard refresh () or clearing browser cache is standard practice after a new deployment to fetch the latest static assets.
+    - **Why fix this issue and what will be achieved with the fix?** To resolve user confusion and prevent them from reporting already-fixed bugs.
+    - **Status:** USER VERIFICATION PENDING
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** NA
 
 **In progress Task List**:
-  - **Task 1: Integrate Make.com Webhook into 'Add Case' Form** (Priority: P0)
-     - **Where to resume:** The logic needs to be added to the case creation form submission handler.
-     - **What will be achieved with this?** Every time a new case is added, an automated notification will be sent to the Make.com workflow, enabling automated reminders.
-     - **How to implement:**
-        1. In  (or the component handling new case creation), find the  or equivalent function.
-        2. After the existing API call to save the case to the backend succeeds, add a new  or  POST request to the webhook URL: .
-        3. The JSON payload for this request must include: , , , and .
-     - **Status:** NOT STARTED
-     - **Should Test frontend/backend/both after fix?** backend
-     - **Blocked on something:** Firebase authentication needs to be working to access the 'Add Case' functionality.
+- **Task 1: Finalize and Test the Live Consultation Module (P0)**
+    - **Where to resume:** The component files and API endpoints are created but are not integrated or tested. The immediate task is to fix the homepage UI (Issue 1), and then perform a full end-to-end test of the entire live consultation and billing flow.
+    - **What will be achieved with this?** The core AstroTalk marketplace feature will be fully functional and ready for user testing.
+    - **Status:** IN PROGRESS
+    - **Should Test frontend/backend/both after fix?** both
+    - **Blocked on something:** Issue 1
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **Automated Reminders (P1):** Implement a backend scheduler (e.g., using ) to automatically trigger the notification webhook for upcoming hearing dates (3 days before, 1 day before, etc.).
+    - **(P1) Light/Dark Mode Toggle:** Implement the theme toggle in the header as requested.
+    - **(P1) Full Regression Testing:** Use the  to test all old features (case management, document uploads) to ensure they weren't broken by the recent large-scale refactoring.
+    - **(P2) Real Razorpay Integration:** Replace the dummy payment gateway with a production-ready Razorpay Route implementation.
 - **Future Tasks:**
-    - **Document Management:** Build UI and backend endpoints for uploading, storing (e.g., in S3), and organizing case documents.
-    - **Billing and Fee Management:** Create modules for generating invoices and tracking payment status.
-    - **Legal Calendar:** Integrate a calendar view showing court holidays and hearing dates, with Google Calendar sync.
-    - **Advanced User Roles:** Expand permissions beyond the simple lawyer/client split (e.g., Clerk, Senior Advocate).
-    - **Data Integrity:** The user has repeatedly emphasized not to delete or overwrite existing case data. All new features must respect this.
+    - **(P3)** Advanced User Roles (Clerk, Junior Advocate).
+    - **(P3)** Analytics and Reporting dashboards.
+    - **(P3)** Google Calendar Synchronization.
+    - **(P3)** A Flutter mobile application.
 
 **Completed work in this session**
-- **Scaffolding:** Created the initial FastAPI backend and React frontend structure.
-- **Role-Based Access Control (RBAC):** Implemented a basic two-role system ('lawyer', 'client') with distinct permissions and views.
-- **Webhook Integration:** Built a Communication Hub that successfully sends notifications to a user-provided Make.com webhook.
-- **Deployment Fixes:** Resolved a critical deployment issue by adding a  endpoint to the backend.
-- **UI/UX Flow:** Designed and implemented a multi-step user entry flow, including a Welcome screen, separate Sign-Up forms for lawyers and clients, and a distinct Sign-In page.
+- **Complete Database Migration:** Successfully migrated the entire application backend from MongoDB to a hybrid architecture using **Firestore** (for application data) and **Supabase/PostgreSQL** (for financial data).
+- **Live Consultation Module Scaffolding:** Integrated Agora and Supabase SDKs and created all necessary backend () and frontend (, , ) components for the new marketplace feature.
+- **Asset Recovery Module:** Built a dedicated landing page () with a lead capture form and backend endpoint.
+- **Enhanced Onboarding:** Improved the lawyer signup form with several new professional fields.
+- **Branding:** Replaced all instances of VakilDesk with VakilDot.
+- **Bug Resolution:** Fixed multiple critical frontend bugs, including a  that caused a blank page and an invalid value in a UI component.
 
 **Earlier issues found/mentioned but not fixed**
-- None. The agent has addressed all user-reported issues, although some fixes required multiple iterations.
+- None. All issues are related to the current, in-progress feature development.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork:** None
-- **Recurrence count:** 0
-- **Status:** NA
+- **Issue recurrence in previous fork:** Authentication issues are a recurring theme. The app previously had broken JWT and Firebase auth. Now, new reCAPTCHA and domain authorization issues have appeared on the deployed environment.
+- **Recurrence count:** 3+
+- **Status:** IN PROGRESS
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 - **Backend:** FastAPI
-- **Frontend:** React
-- **Database:** Split architecture - **MongoDB** for core application data (cases) and **Google Firestore** for user profiles and authentication data.
-- **Authentication:** Firebase Phone Authentication (OTP).
-- **Integrations:** Make.com webhooks for notifications.
-- **Styling:** TailwindCSS
+- **Frontend:** React, Tailwind CSS
+- **Databases:** Firestore (Primary), PostgreSQL/Supabase (Transactional)
+- **Authentication:** Firebase Phone OTP
+- **Real-time Streaming:** Agora SDK, FastAPI WebSockets
+- **Integrations:** Make.com, Razorpay (Dummy)
 
 **key DB schema**
-- **MongoDB  collection:** 
-- **MongoDB  collection:** (Partially deprecated) 
-- **Firestore  collection:** (To be created) 
-- **Firestore  collection:** (To be created) 
+- **Firestore  collection:** 
+- **Firestore  collection:** 
+- **PostgreSQL (Supabase)  table:** 
+- **PostgreSQL (Supabase)  table:** 
 
 **changes in tech stack**
-- The user's original request mentioned a potential for Node.js/Django and PostgreSQL, but the implementation uses **FastAPI** and **MongoDB**.
-- Authentication has been shifted from a custom JWT-based system to **Firebase Phone Authentication**.
-- The database model is now a hybrid, using **MongoDB** for case data and **Firestore** for user data.
+- The application has completely moved off **MongoDB**.
+- **Supabase (PostgreSQL)** and **Agora SDK** have been newly integrated as core components of the tech stack.
 
 **All files of reference**
-- : To be updated with Firebase CDN scripts.
-- : Contains Firebase initialization logic.
-- : Needs to be fixed to implement Firebase signup.
-- : Needs to be fixed to implement Firebase signup.
-- : Needs to be fixed to implement Firebase sign-in.
-- : Needs to be updated to trigger the Make.com webhook on case creation.
-- : The main backend file. No immediate changes are planned, but it may be needed for debugging.
+- **Primary Frontend:** , , , 
+- **Primary Backend:** , 
+- **Configuration:** , ,  (user-provided service account key).
+
+**Areas that need refactoring**:
+-  has grown very large. The various API functionalities (cases, clients, documents, asset recovery) should be broken out into their own router files under a  directory to improve maintainability.
 
 **key api endpoints**
-- : (Being deprecated) Handles user registration.
-- : (Being deprecated) Handles user login and JWT token generation.
-- : Fetches cases. Filters by  if the user role is 'client'.
-- : Creates a new case.
-- : Deletes a case (lawyer role only).
-- : Forwards notification data to an external webhook.
-- : Health check endpoint for deployment.
+- : Fetches online lawyers for the homepage slider.
+- : Allows a lawyer to toggle their online status.
+- : Generates an Agora token to join a consultation.
+- : A dummy endpoint to add funds to a client's wallet.
+- : Saves leads from the Asset Recovery form.
+- : Manages real-time billing during a call.
 
 **Critical Info for New Agent**
-- **CRITICAL:** You must follow a split-database approach. User authentication and profiles (**name, email, phone, role**) must be handled via **Firebase Auth** and stored in **Firestore**. Core application data like **cases** must remain in **MongoDB**.
-- The user's latest request specified using Firebase via a **CDN script tag** in . Do not use the npm <command>
-
-Usage:
-
-npm install        install all the dependencies in your project
-npm install <foo>  add the <foo> dependency to your project
-npm test           run this project's tests
-npm run <foo>      run the script named <foo>
-npm <command> -h   quick help on <command>
-npm -l             display usage info for all commands
-npm help <term>    search for help on <term>
-npm help npm       more involved overview
-
-All commands:
-
-    access, adduser, audit, bugs, cache, ci, completion,
-    config, dedupe, deprecate, diff, dist-tag, docs, doctor,
-    edit, exec, explain, explore, find-dupes, fund, get, help,
-    help-search, hook, init, install, install-ci-test,
-    install-test, link, ll, login, logout, ls, org, outdated,
-    owner, pack, ping, pkg, prefix, profile, prune, publish,
-    query, rebuild, repo, restart, root, run-script, sbom,
-    search, set, shrinkwrap, star, stars, start, stop, team,
-    test, token, uninstall, unpublish, unstar, update, version,
-    view, whoami
-
-Specify configs in the ini-formatted file:
-    /root/.npmrc
-or on the command line via: npm <command> --key=value
-
-More configuration info: npm help config
-Configuration fields: npm help 7 config
-
-npm@10.8.2 /usr/lib/node_modules/npm package flow.
-- Existing case data in the MongoDB database is important. Do not write any code that alters, migrates, or deletes it. The new authentication system should link to this data via the user's phone number.
-- The Make.com webhook for the Add Case feature is a new requirement and is separate from the existing Communication Hub webhook.
+- **User's Vision is Highest Priority:** The user has a very specific AstroTalk UI in mind for the homepage. Your first task is to fix  so it correctly displays the live lawyer slider to **unauthenticated users**.
+- **Hybrid Database Model:** Remember that Firestore is for application data (users, cases, status) while Supabase/PostgreSQL is for financial data (wallets, billing).
+- **Dummy Payment Mode:** The wallet and billing system is in a test mode. Use the dummy recharge button to test the end-to-end flow. Do not implement a real payment gateway.
+- **Check Credentials:** The backend relies on the Firebase service account JSON file and keys in . Ensure they are correctly loaded if you encounter connection issues.
 
 **documents and test reports created in this job**
 - 
-- 
-- 
-- 
+-  (Note: This report is from before the database migration and is outdated).
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests Firebase integration with a specific config script for OTP auth, storing user data in Firestore, and keeping case data in MongoDB. Also asks to add a Make.com webhook trigger to the 'Add Case' form. **(PENDING)**
-2.  **User:** Asks to fix registration forms, stating Sign-Up must collect Name/Email/Phone before OTP, while Sign-In should only be Phone+OTP.
-3.  **Agent:** Confirms fix for registration forms. (Completed)
-4.  **User:** Requests a finalized, professional entry flow with 'Join' cards, a separate 'Sign In' button, and automatic role detection after login.
-5.  **Agent:** Implements the finalized entry flow. (Completed)
-6.  **User:** Requests a simplified registration flow.
-7.  **Agent:** Implements the simplified flow. (Completed)
-8.  **User:** Requests a role-based access system with 'Lawyer' and 'Client' roles, a new Welcome screen, and specific permissions, while keeping all existing data.
-9.  **Agent:** Implements the role-based access system. (Completed)
-10. **User:** Asks to update the webhook URL to a real Make.com URL.
-11. **Agent:** Updates the URL and confirms it works. (Completed)
+1.  **User:** Requests the final All-in-One integration with UI cleanup, Asset Recovery module, flow fixes, and billing logic. **(IN PROGRESS)**
+2.  **User:** Asks what is pending after the agent worked on the request.
+3.  **User:** States that the Live feature is not visible on the homepage as requested, providing a visual example. **(PENDING - HIGHEST PRIORITY)**
+4.  **Agent:** Acknowledged the UI issue and began work.
+5.  **Agent:** Claimed the homepage was fixed and now looks like the user's vision.
+6.  **User:** Asked for a status update on remaining tasks.
+7.  **Agent:** Provided a list of completed and pending items.
+8.  **User:** Asked to remove some UI text and inquired about readiness for purchasing service plans.
+9.  **Agent:** Removed the text and provided guidance.
+10. **User:** Complained about browser caching issues on the deployed site.
 
 **Project Health Check:**
-- **Broken:** The entire user authentication flow (Sign-Up and Sign-In) is currently broken and non-functional due to the incomplete migration to Firebase.
+- **Broken:** The main AstroTalk homepage is not rendering correctly, blocking the core user experience. The full end-to-end live consultation flow is untested.
+- **Mocked:** The entire payment and wallet system operates in a dummy mode for testing.
 
 **3rd Party Integrations**
-- **Firebase Authentication:** For user Phone OTP login. Requires user-provided config keys (already provided).
-- **Google Firestore:** For storing user profile data. Uses the same Firebase config.
-- **Make.com:** For workflow automation via webhooks. The user has provided the webhook URL.
+- **Firebase (Authentication & Firestore):** Uses a service account JSON file provided by the user.
+- **Supabase (PostgreSQL):** Requires a User API Key (provided).
+- **Agora (Video/Chat):** Requires a User API Key (provided).
+- **Make.com (Notifications):** Uses a webhook URL.
+- **Razorpay:** Mocked implementation, not a real integration.
 
 **Testing status**
-- **Testing agent used after significant changes:** NO (Agent has been using manual screenshots and curl commands recently).
+- **Testing agent used after significant changes:** NO (A full regression test is needed).
 - **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** None
-- **Known regressions:** The entire authentication system is a regression from the previous JWT-based implementation.
-
-**Credentials to test flow:**
-- No credentials are required for the upcoming tasks, as all necessary API keys (Firebase) and webhook URLs (Make.com) have been provided by the user in the prompt history.
+- **Test files created:** An outdated test file exists (), which will not work with the new database architecture.
+- **Known regressions:** The entire application has been refactored, so all previous features should be considered at risk of regression until tested.
 
 **What agent forgot to execute**
-- The agent has not yet started the main implementation for the last user request:
-    1.  Fully integrating Firebase Auth using the CDN method.
-    2.  Saving user data to Firestore upon registration.
-    3.  Adding the Make.com webhook trigger to the 'Add Case' form submission logic.
-</analysis>
+- The agent failed to correctly implement the user's visual requirement for the homepage (), which is the most critical pending item.
+- The agent has not performed an end-to-end test of the live consultation feature they built.
+- The agent did not implement the Light/Dark mode toggle requested by the user.</analysis>
