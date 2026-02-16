@@ -77,8 +77,34 @@ const Dashboard = ({ userRole = 'lawyer' }) => {
         <p className="text-muted-foreground">Welcome back! Here's your practice overview.</p>
       </div>
 
-      {/* Live Lawyers Slider */}
-      <LiveLawyersSlider />
+      {/* Go Live Toggle for Lawyers */}
+      {userRole === 'lawyer' && (
+        <Card className="border-2 border-green-500/30 bg-green-50/50 dark:bg-green-950/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center ${isLive ? 'bg-red-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-700'}`}>
+                  <Video className={`h-6 w-6 ${isLive ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Go Live</h3>
+                  <p className="text-sm text-muted-foreground">Toggle to start accepting live consultations</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Label htmlFor="live-toggle" className={isLive ? 'text-red-500 font-bold' : ''}>
+                  {isLive ? 'LIVE NOW' : 'Offline'}
+                </Label>
+                <Switch 
+                  id="live-toggle" 
+                  checked={isLive} 
+                  onCheckedChange={toggleLiveStatus}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="stats-grid">
