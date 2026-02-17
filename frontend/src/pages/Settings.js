@@ -191,12 +191,18 @@ const Settings = ({ user }) => {
         </CardContent>
       </Card>
 
-      {/* Delete Account */}
+      {/* Account Management */}
       <Card className="border-red-200 dark:border-red-900">
-        <CardContent className="pt-6 space-y-4">
-          <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</p>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base text-red-600">Account Management</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Permanently delete your account and all associated data (cases, clients, documents, call history). 
+            This action cannot be undone and your data will be immediately purged from all systems.
+          </p>
           <Button variant="destructive" onClick={handleDeleteAccount}>
-            <LogOut className="h-4 w-4 mr-2" />Delete My Account
+            <LogOut className="h-4 w-4 mr-2" />Delete My Account Permanently
           </Button>
         </CardContent>
       </Card>
