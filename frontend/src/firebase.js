@@ -25,109 +25,95 @@ export const firestore = getFirestore(app);
 
 console.log('Firebase Initialized for VakilDot');
 
-// ✅ IMPROVED: Better reCAPTCHA handling
+// INVISIBLE reCAPTCHA - doesn't interfere with custom captcha
 export const setupRecaptcha = (containerId) => {
-  // Clean up previous verifier completely
   if (window.recaptchaVerifier) {
     try {
       window.recaptchaVerifier.clear();
       window.recaptchaVerifier = null;
     } catch (e) {
-      console.log('Error clearing previous recaptcha:', e);
       window.recaptchaVerifier = null;
     }
   }
   
-  // Ensure container exists and is empty
   const container = document.getElementById(containerId);
   if (!container) {
-    console.error(`Container with id '${containerId}' not found`);
+    console.error(`Container '${containerId}' not found`);
     return null;
   }
   
-  // Clear any existing content
   container.innerHTML = '';
   
   try {
-    // Create new RecaptchaVerifier with visible mode for better reliability
     window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-      size: 'normal', // Changed from 'invisible' to 'normal' for better reliability
+      size: 'invisible', // INVISIBLE - won't show on screen
       callback: (response) => {
-        console.log('reCAPTCHA verified successfully');
+        console.log('reCAPTCHA solved');
       },
       'expired-callback': () => {
-        console.log('reCAPTCHA expired, please refresh');
-        if (window.recaptchaVerifier) {
-          try {
-            window.recaptchaVerifier.clear();
-          } catch (e) {}
-          window.recaptchaVerifier = null;
-        }
-      },
-      'error-callback': (error) => {
-        console.error('reCAPTCHA error:', error);
+        console.log('reCAPTCHA expired');
+        window.recaptchaVerifier = null;
       }
-    });
-    
-    // Render the reCAPTCHA widget
-    window.recaptchaVerifier.render().then((widgetId) => {
-      window.recaptchaWidgetId = widgetId;
-      console.log('reCAPTCHA rendered with widget ID:', widgetId);
-    }).catch((error) => {
-      console.error('Error rendering reCAPTCHA:', error);
     });
     
     return window.recaptchaVerifier;
   } catch (error) {
-    console.error('Error creating RecaptchaVerifier:', error);
+    console.error('RecaptchaVerifier error:', error);
     return null;
   }
 };
 
-// ✅ IMPROVED: Better OTP sending with retry logic
+// Send OTP - with proper phone formatting
 export const sendOTP = async (phoneNumber) => {
   try {
-    // Clear any previous confirmation result
     window.confirmationResult = null;
     
-    const appVerifier = setupRecaptcha('recaptcha-container');
+    // Clean phone number - remove any non-digit characters except +
+    let cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
     
-    if (!appVerifier) {
-      return { success: false, error: 'reCAPTCHA initialization failed. Please refresh the page.' };
+    // Ensure +91 prefix for Indian numbers
+    if (!cleanPhone.startsWith('+')) {
+      if (cleanPhone.startsWith('91') && cleanPhone.length === 12) {
+        cleanPhone = '+' + cleanPhone;
+      } else if (cleanPhone.length === 10) {
+        cleanPhone = '+91' + cleanPhone;
+      } else {
+        cleanPhone = '+91' + cleanPhone;
+      }
     }
     
-    // Wait a bit for reCAPTCHA to fully render
-    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log('Sending OTP to:', cleanPhone);
     
-    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
+    const appVerifier = setupRecaptcha('recaptcha-container');
+    if (!appVerifier) {
+      return { success: false, error: 'reCAPTCHA failed. Please refresh page.' };
+    }
     
-    console.log('Attempting to send OTP to:', formattedPhone);
+    // Wait for reCAPTCHA
+    await new Promise(resolve => setTimeout(resolve, 300));
     
-    const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+    const confirmationResult = await signInWithPhoneNumber(auth, cleanPhone, appVerifier);
     window.confirmationResult = confirmationResult;
     
-    console.log('OTP sent successfully!');
+    console.log('OTP sent successfully');
     return { success: true };
   } catch (error) {
-    console.error('OTP Send Error:', error.code, error.message);
+    console.error('OTP Error:', error.code, error.message);
     
-    // Clean up on error
     if (window.recaptchaVerifier) {
-      try {
-        window.recaptchaVerifier.clear();
-      } catch (e) {}
+      try { window.recaptchaVerifier.clear(); } catch (e) {}
       window.recaptchaVerifier = null;
     }
     
-    // User-friendly error messages
     let errorMessage = 'Failed to send OTP. Please try again.';
-    
     if (error.code === 'auth/invalid-phone-number') {
-      errorMessage = 'Invalid phone number format.';
+      errorMessage = 'Invalid phone number.';
     } else if (error.code === 'auth/too-many-requests') {
-      errorMessage = 'Too many attempts. Please try after some time.';
+      errorMessage = 'Too many attempts. Try later.';
     } else if (error.code === 'auth/captcha-check-failed') {
-      errorMessage = 'reCAPTCHA verification failed. Please refresh and try again.';
+      errorMessage = 'Security check failed. Refresh page.';
+    } else if (error.code === 'auth/quota-exceeded') {
+      errorMessage = 'SMS quota exceeded. Try later.';
     }
     
     return { success: false, error: errorMessage };
@@ -140,27 +126,22 @@ export const verifyOTP = async (code) => {
       return { success: false, error: 'Please request OTP first' };
     }
     
-    console.log('Verifying OTP...');
     const result = await window.confirmationResult.confirm(code);
     
-    // Clean up after successful verification
     if (window.recaptchaVerifier) {
-      try {
-        window.recaptchaVerifier.clear();
-      } catch (e) {}
+      try { window.recaptchaVerifier.clear(); } catch (e) {}
       window.recaptchaVerifier = null;
     }
     
-    console.log('OTP verified successfully!');
     return { success: true, user: result.user };
   } catch (error) {
-    console.error('OTP verification error:', error.code, error.message);
+    console.error('Verify Error:', error.code);
     
-    let errorMessage = 'Invalid OTP. Please try again.';
+    let errorMessage = 'Invalid OTP';
     if (error.code === 'auth/invalid-verification-code') {
-      errorMessage = 'Invalid OTP code.';
+      errorMessage = 'Wrong OTP code';
     } else if (error.code === 'auth/code-expired') {
-      errorMessage = 'OTP expired. Please request a new one.';
+      errorMessage = 'OTP expired. Request new one.';
     }
     
     return { success: false, error: errorMessage };
@@ -173,12 +154,13 @@ export const saveUserToFirestore = async (uid, userData, role) => {
     await setDoc(doc(firestore, collectionName, uid), { 
       ...userData, 
       uid, 
-      role, 
+      role,
+      user_role: role,
       createdAt: new Date().toISOString() 
     });
     return { success: true };
   } catch (error) {
-    console.error('Firestore save error:', error);
+    console.error('Firestore error:', error);
     return { success: false, error: error.message };
   }
 };
@@ -192,7 +174,6 @@ export const registerNewClient = async (clientData) => {
     });
     return { success: true, id: docRef.id };
   } catch (error) {
-    console.error("Firebase Error:", error.message);
     return { success: false, error: error.message };
   }
 };
