@@ -192,17 +192,57 @@ async def upload_profile_photo(file: UploadFile = File(...), user=Depends(get_cu
 
 @api_router.delete("/profile")
 async def delete_profile(user=Depends(get_current_user)):
-    # Delete all user data
-    for c in db.collection('clients').where('lawyer_id', '==', user['id']).stream():
+    """HARD DELETE - Permanently purge all user data from database"""
+    user_id = user['id']
+    
+    # Delete all clients
+    for c in db.collection('clients').where('lawyer_id', '==', user_id).stream():
         db.collection('clients').document(c.id).delete()
-    for c in db.collection('cases').where('lawyer_id', '==', user['id']).stream():
+    
+    # Delete all cases
+    for c in db.collection('cases').where('lawyer_id', '==', user_id).stream():
         db.collection('cases').document(c.id).delete()
-    for d in db.collection('documents').where('lawyer_id', '==', user['id']).stream():
+    
+    # Delete all documents
+    for d in db.collection('documents').where('lawyer_id', '==', user_id).stream():
         db.collection('documents').document(d.id).delete()
-    for r in db.collection('reminders').where('lawyer_id', '==', user['id']).stream():
+    
+    # Delete all reminders
+    for r in db.collection('reminders').where('lawyer_id', '==', user_id).stream():
         db.collection('reminders').document(r.id).delete()
-    db.collection('lawyers').document(user['id']).delete()
-    return {"success": True}
+    
+    # Delete call history
+    for h in db.collection('call_history').where('lawyer_id', '==', user_id).stream():
+        db.collection('call_history').document(h.id).delete()
+    for h in db.collection('call_history').where('client_id', '==', user_id).stream():
+        db.collection('call_history').document(h.id).delete()
+    
+    # Delete chat messages
+    for m in db.collection('chat_messages').where('sender_id', '==', user_id).stream():
+        db.collection('chat_messages').document(m.id).delete()
+    
+    # Delete notifications
+    for n in db.collection('fcm_tokens').where('user_id', '==', user_id).stream():
+        db.collection('fcm_tokens').document(n.id).delete()
+    for n in db.collection('notification_logs').where('user_id', '==', user_id).stream():
+        db.collection('notification_logs').document(n.id).delete()
+    
+    # Delete live status
+    try:
+        db.collection('live_lawyers').document(user_id).delete()
+    except:
+        pass
+    
+    # Delete from users collection (Firebase)
+    try:
+        db.collection('users').document(user_id).delete()
+    except:
+        pass
+    
+    # Finally delete the main lawyer/user profile
+    db.collection('lawyers').document(user_id).delete()
+    
+    return {"success": True, "message": "Account permanently deleted"}
 
 # Clients
 @api_router.post("/clients")
