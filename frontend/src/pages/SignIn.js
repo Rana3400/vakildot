@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Scale, ArrowLeft } from 'lucide-react';
@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { sendOTP, verifyOTP, getUserFromFirestore } from '@/firebase';
+import { sendOTP, verifyOTP } from '@/firebase';
+import SimpleCaptcha from '@/components/SimpleCaptcha';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -17,10 +18,17 @@ const SignIn = ({ onLogin }) => {
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
   const navigate = useNavigate();
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
+    
+    if (!captchaVerified) {
+      toast.error('Please verify the captcha first');
+      return;
+    }
+    
     if (mobile.length !== 10) {
       toast.error('Please enter valid 10-digit mobile number');
       return;
@@ -59,7 +67,6 @@ const SignIn = ({ onLogin }) => {
         return;
       }
 
-      // Check if user exists in MongoDB (primary data source for cases)
       const response = await axios.post(`${API}/auth/signin`, { mobile });
       
       if (!response.data.success) {
@@ -68,7 +75,6 @@ const SignIn = ({ onLogin }) => {
         return;
       }
 
-      // Login successful
       onLogin(response.data.token, response.data.user);
       toast.success(`Welcome back, ${response.data.user.name}!`);
       navigate('/dashboard');
@@ -128,7 +134,19 @@ const SignIn = ({ onLogin }) => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading} data-testid="send-signin-otp-button">
+
+                {/* Captcha at Footer */}
+                <div className="pt-4 border-t">
+                  <Label className="text-sm text-muted-foreground mb-2 block">Security Check</Label>
+                  <SimpleCaptcha onVerify={setCaptchaVerified} />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={loading || !captchaVerified} 
+                  data-testid="send-signin-otp-button"
+                >
                   {loading ? 'Sending...' : 'Send OTP'}
                 </Button>
               </form>
@@ -160,6 +178,7 @@ const SignIn = ({ onLogin }) => {
                   onClick={() => {
                     setOtpSent(false);
                     setOtp('');
+                    setCaptchaVerified(false);
                   }}
                   data-testid="change-signin-number-button"
                 >
