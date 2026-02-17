@@ -10,6 +10,9 @@ import { sendOTP, verifyOTP, firestore } from '@/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import SimpleCaptcha from '@/components/SimpleCaptcha';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
 const ClientOnboarding = ({ onComplete }) => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1); 
@@ -37,15 +40,17 @@ const ClientOnboarding = ({ onComplete }) => {
 
     setLoading(true);
     try {
-      const result = await sendOTP(`+91${formData.mobile}`);
+      // Send OTP with just the 10-digit number (firebase.js will format it)
+      const result = await sendOTP(formData.mobile);
       if (result.success) {
-        toast.success('OTP sent!');
+        toast.success('OTP sent to your mobile!');
         setStep(2);
       } else {
-        toast.error(result.error || 'OTP failed');
+        toast.error(result.error || 'Failed to send OTP');
       }
     } catch (error) {
-      toast.error('Service Error');
+      console.error('Error:', error);
+      toast.error('Service Error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -53,48 +58,64 @@ const ClientOnboarding = ({ onComplete }) => {
 
   const handleVerifyAndRegister = async (e) => {
     e.preventDefault();
+    
+    if (otp.length !== 6) {
+      toast.error('Enter 6-digit OTP');
+      return;
+    }
+    
     setLoading(true);
 
     try {
       const verifyResult = await verifyOTP(otp);
       if (!verifyResult.success) {
-        toast.error('Invalid OTP');
+        toast.error(verifyResult.error || 'Invalid OTP');
         setLoading(false);
         return;
       }
 
       const uid = verifyResult.user.uid;
+      
+      // Save to Firestore
       const userRef = doc(firestore, 'users', uid);
-      const userDoc = await getDoc(userRef);
+      await setDoc(userRef, {
+        name: formData.name,
+        mobile: formData.mobile,
+        email: formData.email || '',
+        user_role: 'client',
+        role: 'client',
+        createdAt: serverTimestamp()
+      });
 
-      if (userDoc.exists()) {
-        toast.info('Account exists. Logging you in...');
-      } else {
-        await setDoc(userRef, {
-          name: formData.name,
-          mobile: formData.mobile,
-          email: formData.email,
-          user_role: 'client',
-          role: 'client',
-          createdAt: serverTimestamp()
-        });
-        toast.success('Profile Registered!');
-      }
+      // Also save to lawyers collection (for unified user management)
+      const lawyerRef = doc(firestore, 'lawyers', uid);
+      await setDoc(lawyerRef, {
+        id: uid,
+        name: formData.name,
+        mobile: formData.mobile,
+        email: formData.email || '',
+        user_role: 'client',
+        role: 'client',
+        createdAt: new Date().toISOString()
+      });
+
+      toast.success('Account Created Successfully!');
 
       const token = await verifyResult.user.getIdToken();
-      onComplete(token, { 
+      const userData = { 
         id: uid, 
         name: formData.name, 
         mobile: formData.mobile,
         email: formData.email,
         user_role: 'client',
         role: 'client' 
-      });
+      };
       
-      // Redirect to CLIENT dashboard
+      onComplete(token, userData);
       navigate('/client-dashboard');
     } catch (error) {
-      toast.error('Registration error');
+      console.error('Registration error:', error);
+      toast.error('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -102,6 +123,7 @@ const ClientOnboarding = ({ onComplete }) => {
 
   return (
     <div className="min-h-screen bg-muted/30 p-4 py-12">
+      {/* Hidden reCAPTCHA container for Firebase */}
       <div id="recaptcha-container"></div>
       
       <div className="max-w-md mx-auto">
@@ -121,7 +143,7 @@ const ClientOnboarding = ({ onComplete }) => {
           <CardHeader>
             <CardTitle>{step === 1 ? 'Client Sign Up' : 'Verify OTP'}</CardTitle>
             <CardDescription>
-              {step === 1 ? 'Enter your details to track cases' : 'Enter the code sent to your phone'}
+              {step === 1 ? 'Enter your details to track your cases' : 'Enter the code sent to your phone'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -162,14 +184,14 @@ const ClientOnboarding = ({ onComplete }) => {
                   </div>
                 </div>
 
-                {/* Captcha at Footer */}
+                {/* Alphanumeric Captcha at Footer */}
                 <div className="pt-4 border-t mt-4">
                   <Label className="text-sm text-muted-foreground mb-2 block">Security Verification</Label>
                   <SimpleCaptcha onVerify={setCaptchaVerified} />
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading || !captchaVerified}>
-                  {loading ? 'Sending...' : 'Request OTP'}
+                  {loading ? 'Sending OTP...' : 'Request OTP'}
                 </Button>
               </form>
             ) : (
@@ -191,7 +213,7 @@ const ClientOnboarding = ({ onComplete }) => {
                   {loading ? 'Verifying...' : 'Complete Sign Up'}
                 </Button>
                 
-                <Button variant="ghost" className="w-full" onClick={() => { setStep(1); setCaptchaVerified(false); }}>
+                <Button type="button" variant="ghost" className="w-full" onClick={() => { setStep(1); setCaptchaVerified(false); }}>
                   Edit Number
                 </Button>
               </form>
