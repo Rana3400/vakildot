@@ -63,15 +63,31 @@ async def go_live(data: LawyerStatus):
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
         
-        # Save to Firestore for persistence
+        # Save to Firestore for persistence (creates if doesn't exist)
         db.collection('live_lawyers').document(data.lawyer_id).set(live_data, merge=True)
         
-        # Also update the lawyer's main profile
-        db.collection('lawyers').document(data.lawyer_id).update({
-            "is_live": data.is_live,
-            "rate_per_minute": data.rate_per_minute,
-            "last_live_toggle": datetime.now(timezone.utc).isoformat()
-        })
+        # Check if lawyer exists before updating
+        lawyer_ref = db.collection('lawyers').document(data.lawyer_id)
+        lawyer_doc = lawyer_ref.get()
+        
+        if lawyer_doc.exists:
+            lawyer_ref.update({
+                "is_live": data.is_live,
+                "rate_per_minute": data.rate_per_minute,
+                "last_live_toggle": datetime.now(timezone.utc).isoformat()
+            })
+        else:
+            # Create minimal lawyer entry if doesn't exist
+            lawyer_ref.set({
+                "id": data.lawyer_id,
+                "name": data.name,
+                "is_live": data.is_live,
+                "rate_per_minute": data.rate_per_minute,
+                "court": data.court,
+                "photo_url": data.photo_url,
+                "practice_field": data.specialization,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }, merge=True)
         
         return {
             "success": True,
