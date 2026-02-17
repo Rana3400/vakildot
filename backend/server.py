@@ -414,6 +414,72 @@ app.include_router(calls_router)
 from admin_panel import router as admin_router
 app.include_router(admin_router)
 
+# Client-specific endpoints
+@api_router.get("/client/my-cases")
+async def get_client_cases(user=Depends(get_current_user)):
+    """Get cases assigned to this client"""
+    if user.get('user_role') != 'client':
+        raise HTTPException(status_code=403, detail="Client access only")
+    
+    # Find cases where client phone matches
+    docs = db.collection('cases').where('client_phone', '==', user['mobile']).stream()
+    cases = []
+    for doc in docs:
+        case_data = doc.to_dict()
+        case_data['id'] = doc.id
+        # Get lawyer name
+        lawyer_doc = db.collection('lawyers').document(case_data.get('lawyer_id', '')).get()
+        if lawyer_doc.exists:
+            case_data['lawyer_name'] = lawyer_doc.to_dict().get('name', 'Your Lawyer')
+        cases.append(case_data)
+    return {"cases": cases}
+
+@api_router.get("/client/my-documents")
+async def get_client_documents(user=Depends(get_current_user)):
+    """Get documents related to client's cases"""
+    if user.get('user_role') != 'client':
+        raise HTTPException(status_code=403, detail="Client access only")
+    
+    # Get client's cases first
+    case_docs = db.collection('cases').where('client_phone', '==', user['mobile']).stream()
+    case_ids = [doc.id for doc in case_docs]
+    
+    documents = []
+    for case_id in case_ids:
+        doc_stream = db.collection('documents').where('case_id', '==', case_id).stream()
+        for doc in doc_stream:
+            doc_data = doc.to_dict()
+            doc_data['id'] = doc.id
+            documents.append(doc_data)
+    
+    return {"documents": documents}
+
+@api_router.get("/client/my-hearings")
+async def get_client_hearings(user=Depends(get_current_user)):
+    """Get upcoming hearings for client"""
+    if user.get('user_role') != 'client':
+        raise HTTPException(status_code=403, detail="Client access only")
+    
+    today = datetime.now(timezone.utc).date().isoformat()
+    docs = db.collection('cases').where('client_phone', '==', user['mobile']).stream()
+    
+    hearings = []
+    for doc in docs:
+        case_data = doc.to_dict()
+        if case_data.get('next_hearing_date') and case_data['next_hearing_date'] >= today:
+            hearings.append({
+                'case_id': doc.id,
+                'case_number': case_data.get('case_number'),
+                'case_type': case_data.get('case_type'),
+                'court_name': case_data.get('court_name'),
+                'hearing_date': case_data.get('next_hearing_date'),
+                'hearing_time': case_data.get('next_hearing_time', '10:00 AM'),
+                'case_stage': case_data.get('case_stage')
+            })
+    
+    hearings.sort(key=lambda x: x['hearing_date'])
+    return {"hearings": hearings}
+
 # Asset Recovery Leads
 @api_router.post("/asset-recovery/leads")
 async def create_asset_lead(data: dict):
