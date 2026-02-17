@@ -7,7 +7,8 @@ import Welcome from '@/pages/Welcome';
 import SignIn from '@/pages/SignIn';
 import LawyerOnboarding from '@/pages/LawyerOnboarding';
 import ClientOnboarding from '@/pages/ClientOnboarding';
-import Dashboard from '@/pages/Dashboard';
+import LawyerDashboard from '@/pages/LawyerDashboard';
+import ClientDashboard from '@/pages/ClientDashboard';
 import Cases from '@/pages/Cases';
 import CaseDetail from '@/pages/CaseDetail';
 import Clients from '@/pages/Clients';
@@ -55,37 +56,57 @@ function App() {
   };
 
   const userRole = user?.user_role || 'lawyer';
+  const isClient = userRole === 'client';
+
+  // Determine default dashboard based on role
+  const getDefaultDashboard = () => {
+    if (!token) return '/';
+    return isClient ? '/client-dashboard' : '/lawyer-dashboard';
+  };
 
   return (
     <BrowserRouter>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Welcome />} />
-        <Route path="/signin" element={token ? <Navigate to="/dashboard" /> : <SignIn onLogin={handleLogin} />} />
-        <Route path="/signup/lawyer" element={token ? <Navigate to="/dashboard" /> : <LawyerOnboarding onComplete={handleLogin} />} />
-        <Route path="/signup/client" element={token ? <Navigate to="/dashboard" /> : <ClientOnboarding onComplete={handleLogin} />} />
+        {/* Public Routes */}
+        <Route path="/" element={token ? <Navigate to={getDefaultDashboard()} /> : <Welcome />} />
+        <Route path="/signin" element={token ? <Navigate to={getDefaultDashboard()} /> : <SignIn onLogin={handleLogin} />} />
+        <Route path="/signup/lawyer" element={token ? <Navigate to="/lawyer-dashboard" /> : <LawyerOnboarding onComplete={handleLogin} />} />
+        <Route path="/signup/client" element={token ? <Navigate to="/client-dashboard" /> : <ClientOnboarding onComplete={handleLogin} />} />
         <Route path="/asset-recovery" element={<AssetRecovery />} />
         <Route path="/admin" element={<AdminPanel />} />
         
+        {/* Protected Routes with Layout */}
         <Route path="/" element={<PrivateRoute><Layout user={user} onLogout={handleLogout} /></PrivateRoute>}>
-          <Route path="dashboard" element={<Dashboard userRole={userRole} />} />
+          {/* Role-Specific Dashboards */}
+          <Route path="lawyer-dashboard" element={
+            isClient ? <Navigate to="/client-dashboard" /> : <LawyerDashboard />
+          } />
+          <Route path="client-dashboard" element={
+            !isClient ? <Navigate to="/lawyer-dashboard" /> : <ClientDashboard />
+          } />
+          
+          {/* Legacy dashboard route - redirect based on role */}
+          <Route path="dashboard" element={<Navigate to={getDefaultDashboard()} />} />
+          
+          {/* Common Routes */}
           <Route path="cases" element={<Cases userRole={userRole} />} />
           <Route path="cases/:caseId" element={<CaseDetail userRole={userRole} />} />
           <Route path="wallet" element={<Wallet />} />
           <Route path="call-history" element={<CallHistory />} />
           <Route path="consultation/:lawyerId" element={<ConsultationRoom />} />
-          {userRole === 'lawyer' && (
-            <>
-              <Route path="clients" element={<Clients />} />
-              <Route path="clients/:clientId" element={<ClientDetail />} />
-              <Route path="documents" element={<Documents />} />
-              <Route path="calendar" element={<Calendar />} />
-              <Route path="billing" element={<Billing />} />
-            </>
-          )}
           <Route path="settings" element={<Settings user={user} />} />
+          
+          {/* LAWYER-ONLY Routes - Clients BLOCKED */}
+          <Route path="clients" element={isClient ? <Navigate to="/client-dashboard" /> : <Clients />} />
+          <Route path="clients/:clientId" element={isClient ? <Navigate to="/client-dashboard" /> : <ClientDetail />} />
+          <Route path="documents" element={isClient ? <Navigate to="/client-dashboard" /> : <Documents />} />
+          <Route path="calendar" element={isClient ? <Navigate to="/client-dashboard" /> : <Calendar />} />
+          <Route path="billing" element={isClient ? <Navigate to="/client-dashboard" /> : <Billing />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" />} />
+        
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to={getDefaultDashboard()} />} />
       </Routes>
     </BrowserRouter>
   );
