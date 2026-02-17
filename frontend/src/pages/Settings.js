@@ -191,11 +191,10 @@ const Settings = ({ user }) => {
         </CardContent>
       </Card>
 
-      {/* Danger Zone */}
-      <Card className="border-destructive">
-        <CardHeader><CardTitle className="text-destructive">Danger Zone</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">Once you delete your account, there is no going back. Please be certain.</p>
+      {/* Delete Account */}
+      <Card className="border-red-200 dark:border-red-900">
+        <CardContent className="pt-6 space-y-4">
+          <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</p>
           <Button variant="destructive" onClick={handleDeleteAccount}>
             <LogOut className="h-4 w-4 mr-2" />Delete My Account
           </Button>
