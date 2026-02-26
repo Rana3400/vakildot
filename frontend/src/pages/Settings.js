@@ -58,7 +58,12 @@ const Settings = ({ user }) => {
       const res = await axios.post(`${API}/profile/upload-photo`, formData, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       });
-      setProfile(p => ({ ...p, photo_url: res.data.photo_url }));
+      const newPhotoUrl = res.data.photo_url;
+      setProfile(p => ({ ...p, photo_url: newPhotoUrl }));
+      // Sync to localStorage immediately so Go Live picks it up
+      const storedUser = JSON.parse(localStorage.getItem('vakildot_user') || '{}');
+      storedUser.photo_url = newPhotoUrl;
+      localStorage.setItem('vakildot_user', JSON.stringify(storedUser));
       toast.success('Photo uploaded!');
     } catch (error) {
       toast.error('Failed to upload photo');
