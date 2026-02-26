@@ -481,16 +481,16 @@ const Welcome = () => {
       </section>
 
       {/* Footer */}
-      <footer className={`py-12 px-4 ${darkMode ? 'bg-slate-900 border-t border-slate-800' : 'bg-slate-900'}`}>
+      <footer className={`py-8 md:py-12 px-4 ${darkMode ? 'bg-slate-900 border-t border-slate-800' : 'bg-slate-900'}`}>
         <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-amber-500/20">
-              <Scale className="h-7 w-7 text-amber-500" />
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="p-1.5 rounded-lg bg-amber-500/20">
+              <Scale className="h-5 w-5 md:h-7 md:w-7 text-amber-500" />
             </div>
-            <span className="text-2xl font-bold text-white">VakilDot</span>
+            <span className="text-xl md:text-2xl font-bold text-white">VakilDot</span>
           </div>
-          <p className="text-sm text-slate-400">The Digital Munshi for Indian Advocates</p>
-          <div className="flex justify-center gap-6 mt-6 text-sm text-slate-500">
+          <p className="text-xs md:text-sm text-slate-400">The Digital Munshi for Indian Advocates</p>
+          <div className="flex flex-wrap justify-center gap-3 md:gap-6 mt-4 md:mt-6 text-xs md:text-sm text-slate-500">
             <span>© 2024 VakilDot</span>
             <span>•</span>
             <a href="#" className="hover:text-amber-500 transition-colors">Privacy Policy</a>
