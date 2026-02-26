@@ -262,17 +262,17 @@ const Welcome = () => {
       </section>
 
       {/* SECTION 2: Live Legal Consultations */}
-      <section className={`py-16 px-4 ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
+      <section className={`py-10 md:py-16 px-4 ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto text-center">
-          <Badge className={`mb-6 px-4 py-2 text-sm font-medium ${darkMode ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+          <Badge className={`mb-4 md:mb-6 px-3 py-1.5 text-xs md:text-sm font-medium ${darkMode ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
             <span className="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse inline-block"></span>
             {lawyers.length} Lawyers Online Now
           </Badge>
           
-          <h2 className={`text-4xl md:text-5xl font-bold mb-4 ${t.text}`}>
+          <h2 className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 ${t.text}`}>
             Live Legal <span className={t.accentText}>Consultations</span>
           </h2>
-          <p className={`text-xl mb-8 ${t.textMuted}`}>Talk to a Verified Lawyer Now • Pay Per Minute</p>
+          <p className={`text-base md:text-xl mb-6 md:mb-8 ${t.textMuted}`}>Talk to a Verified Lawyer Now</p>
           
           {/* Join Live Stream Button */}
           <Button 
