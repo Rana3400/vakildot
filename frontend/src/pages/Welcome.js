@@ -179,12 +179,12 @@ const Welcome = () => {
       </header>
 
       {/* SECTION 1: Join VakilDot Today - FIRST */}
-      <section className={`py-20 px-4 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-100 via-white to-slate-100'}`}>
+      <section className={`py-12 md:py-20 px-4 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-100 via-white to-slate-100'}`}>
         <div className="max-w-5xl mx-auto">
-          <h1 className={`text-5xl md:text-6xl font-bold text-center mb-4 ${t.text}`}>
+          <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-3 ${t.text}`}>
             Join <span className={t.accentText}>VakilDot</span> Today
           </h1>
-          <p className={`text-center text-xl mb-12 ${t.textMuted}`}>India's Premier Legal Consultation Platform</p>
+          <p className={`text-center text-base md:text-xl mb-8 md:mb-12 ${t.textMuted}`}>India's Premier Legal Consultation Platform</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Lawyer Card - 3D */}
