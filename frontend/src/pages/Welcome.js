@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Scale, Video, Star, Shield, ChevronLeft, ChevronRight, Users, UserCheck, Moon, Sun, Briefcase, Building, Home, Gavel, Award, Clock } from 'lucide-react';
+import { Scale, Video, Star, Shield, ChevronLeft, ChevronRight, Users, UserCheck, Moon, Sun, Briefcase, Building, Home, Gavel, Award, Clock, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
