@@ -68,6 +68,7 @@ function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-right" />
+      <PWAInstallBanner />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={token ? <Navigate to={getDefaultDashboard()} /> : <Welcome />} />
