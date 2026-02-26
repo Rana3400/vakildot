@@ -409,7 +409,7 @@ const Welcome = () => {
             <Button 
               variant="outline" 
               size="icon" 
-              className={`absolute -right-2 top-1/2 -translate-y-1/2 z-10 rounded-full h-14 w-14 shadow-xl ${darkMode ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : 'bg-white hover:bg-slate-50'}`}
+              className={`hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 rounded-full h-14 w-14 shadow-xl ${darkMode ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : 'bg-white hover:bg-slate-50'}`}
               onClick={() => scrollContainer('right')}
             >
               <ChevronRight className="h-7 w-7" />
