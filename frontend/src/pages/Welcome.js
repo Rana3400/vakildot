@@ -392,7 +392,7 @@ const Welcome = () => {
                     </div>
                     
                     <Button 
-                      className={`w-full mt-4 h-12 text-base font-semibold ${
+                      className={`w-full mt-3 md:mt-4 h-10 md:h-12 text-sm md:text-base font-semibold ${
                         darkMode 
                           ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 shadow-lg shadow-amber-500/30' 
                           : 'bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white shadow-lg shadow-slate-900/30'
