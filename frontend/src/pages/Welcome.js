@@ -288,7 +288,7 @@ const Welcome = () => {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4 mb-4">
             <Select value={selectedState || 'all'} onValueChange={(v) => setSelectedState(v === 'all' ? '' : v)}>
-              <SelectTrigger className={`w-[220px] h-12 ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} shadow-md`}>
+              <SelectTrigger className={`w-full sm:w-[220px] h-12 ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} shadow-md`}>
                 <SelectValue placeholder="Select State" />
               </SelectTrigger>
               <SelectContent className={darkMode ? 'bg-slate-800 border-slate-700' : ''}>
@@ -298,7 +298,7 @@ const Welcome = () => {
             </Select>
             
             <Select value={selectedCourt || 'all'} onValueChange={(v) => setSelectedCourt(v === 'all' ? '' : v)} disabled={!selectedState}>
-              <SelectTrigger className={`w-[240px] h-12 ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} shadow-md`}>
+              <SelectTrigger className={`w-full sm:w-[240px] h-12 ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} shadow-md`}>
                 <SelectValue placeholder="Select Court" />
               </SelectTrigger>
               <SelectContent className={darkMode ? 'bg-slate-800 border-slate-700' : ''}>
