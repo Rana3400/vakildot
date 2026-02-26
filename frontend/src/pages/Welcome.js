@@ -428,7 +428,7 @@ const Welcome = () => {
           <h2 className="text-2xl md:text-4xl font-bold text-center mb-3 text-white">Asset Recovery Services</h2>
           <p className="text-center mb-8 md:mb-14 text-slate-300 text-sm md:text-base">Recover your unclaimed assets with expert legal help</p>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             {[
               { icon: Briefcase, title: 'IEPF Shares', desc: 'Recover unclaimed shares & dividends', color: 'from-blue-500 to-blue-600' },
               { icon: Shield, title: 'Insurance', desc: 'Unclaimed insurance policies', color: 'from-green-500 to-green-600' },
@@ -441,12 +441,12 @@ const Welcome = () => {
                 style={{ boxShadow: '0 20px 40px -15px rgba(0,0,0,0.5)' }}
                 onClick={() => navigate('/asset-recovery')}
               >
-                <CardContent className="pt-10 pb-10">
-                  <div className={`h-16 w-16 mx-auto mb-5 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg`}>
-                    <item.icon className="h-8 w-8 text-white" />
+                <CardContent className="pt-6 pb-6 md:pt-10 md:pb-10">
+                  <div className={`h-10 w-10 md:h-16 md:w-16 mx-auto mb-3 md:mb-5 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg`}>
+                    <item.icon className="h-5 w-5 md:h-8 md:w-8 text-white" />
                   </div>
-                  <h3 className="font-bold text-lg text-white mb-2">{item.title}</h3>
-                  <p className="text-sm text-slate-400">{item.desc}</p>
+                  <h3 className="font-bold text-sm md:text-lg text-white mb-1">{item.title}</h3>
+                  <p className="text-xs md:text-sm text-slate-400 hidden sm:block">{item.desc}</p>
                 </CardContent>
               </Card>
             ))}
