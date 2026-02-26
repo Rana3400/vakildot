@@ -472,7 +472,47 @@ async def get_client_cases(user=Depends(get_current_user)):
         if lawyer_doc.exists:
             case_data['lawyer_name'] = lawyer_doc.to_dict().get('name', 'Your Lawyer')
         cases.append(case_data)
-    return {"cases": cases}
+    # Also return assigned lawyer IDs from cases
+    lawyer_ids = list(set(c.get('lawyer_id') for c in cases if c.get('lawyer_id')))
+    assigned_lawyer_id = lawyer_ids[0] if lawyer_ids else None
+    return {"cases": cases, "assigned_lawyer_id": assigned_lawyer_id}
+
+@api_router.get("/client/my-lawyer")
+async def get_client_lawyer(user=Depends(get_current_user)):
+    """Get the lawyer assigned to this client via their cases"""
+    if user.get('user_role') != 'client':
+        raise HTTPException(status_code=403, detail="Client access only")
+    
+    # Find cases for this client
+    case_docs = list(db.collection('cases').where('client_phone', '==', user['mobile']).stream())
+    if not case_docs:
+        return {"lawyer": None}
+    
+    # Get the lawyer_id from the first case
+    lawyer_id = case_docs[0].to_dict().get('lawyer_id')
+    if not lawyer_id:
+        return {"lawyer": None}
+    
+    # Get the lawyer's full profile
+    lawyer_doc = db.collection('lawyers').document(lawyer_id).get()
+    if not lawyer_doc.exists:
+        return {"lawyer": None}
+    
+    ld = lawyer_doc.to_dict()
+    # Check live status
+    live_doc = db.collection('live_lawyers').document(lawyer_id).get()
+    is_live = live_doc.to_dict().get('is_live', False) if live_doc.exists else False
+    
+    return {"lawyer": {
+        "id": lawyer_id,
+        "name": ld.get('name', 'Advocate'),
+        "photo_url": ld.get('photo_url'),
+        "court": ld.get('court', ''),
+        "practice_field": ld.get('practice_field', ''),
+        "mobile": ld.get('mobile', ''),
+        "is_live": is_live,
+        "rate_per_minute": ld.get('rate_per_minute', 30)
+    }}
 
 @api_router.get("/client/my-documents")
 async def get_client_documents(user=Depends(get_current_user)):
