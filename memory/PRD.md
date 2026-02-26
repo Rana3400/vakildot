@@ -40,6 +40,12 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
 - `/api/client/my-cases` now returns `assigned_lawyer_id`
 - PWA: manifest.json, service-worker.js, app icons, install banner
 - Updated index.html with PWA meta tags
+- **Mobile Responsive Fix**: Complete homepage mobile overhaul:
+  - Header: hamburger menu + visible Sign In button (no more horizontal scroll)
+  - Responsive text sizes, card spacing, button sizes
+  - Touch-friendly slider with snap scrolling
+  - Compact asset recovery grid on mobile
+  - Proper footer on small screens
 
 ### Scaffolded (Not Fully Tested)
 - Push Notifications (backend module exists)
