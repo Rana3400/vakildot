@@ -186,7 +186,7 @@ const Welcome = () => {
           </h1>
           <p className={`text-center text-base md:text-xl mb-8 md:mb-12 ${t.textMuted}`}>India's Premier Legal Consultation Platform</p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
             {/* Lawyer Card - 3D */}
             <Card 
               className={`cursor-pointer transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 ${
@@ -197,21 +197,21 @@ const Welcome = () => {
               style={{ boxShadow: darkMode ? '0 25px 50px -15px rgba(0,0,0,0.5)' : '0 25px 50px -15px rgba(0,0,0,0.1)' }}
               onClick={() => navigate('/signup/lawyer')}
             >
-              <CardContent className="pt-12 pb-12 text-center">
-                <div className={`h-24 w-24 mx-auto mb-8 rounded-2xl flex items-center justify-center transform rotate-3 ${
+              <CardContent className="pt-8 pb-8 md:pt-12 md:pb-12 text-center">
+                <div className={`h-16 w-16 md:h-24 md:w-24 mx-auto mb-4 md:mb-8 rounded-2xl flex items-center justify-center transform rotate-3 ${
                   darkMode 
                     ? 'bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/30' 
                     : 'bg-gradient-to-br from-slate-800 to-slate-900 shadow-lg shadow-slate-900/30'
                 }`}>
-                  <UserCheck className={`h-12 w-12 ${darkMode ? 'text-slate-900' : 'text-white'}`} />
+                  <UserCheck className={`h-8 w-8 md:h-12 md:w-12 ${darkMode ? 'text-slate-900' : 'text-white'}`} />
                 </div>
-                <h3 className={`text-2xl font-bold mb-3 ${t.text}`}>Join as Lawyer</h3>
-                <p className={`mb-8 ${t.textMuted}`}>
+                <h3 className={`text-xl md:text-2xl font-bold mb-2 ${t.text}`}>Join as Lawyer</h3>
+                <p className={`mb-6 md:mb-8 text-sm md:text-base ${t.textMuted}`}>
                   Go live, consult clients, manage cases, and earn per minute
                 </p>
                 <Button 
                   size="lg" 
-                  className={`w-full h-14 text-base font-semibold ${
+                  className={`w-full h-12 md:h-14 text-sm md:text-base font-semibold ${
                     darkMode 
                       ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900' 
                       : 'bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white'
@@ -232,22 +232,22 @@ const Welcome = () => {
               style={{ boxShadow: darkMode ? '0 25px 50px -15px rgba(0,0,0,0.5)' : '0 25px 50px -15px rgba(0,0,0,0.1)' }}
               onClick={() => navigate('/signup/client')}
             >
-              <CardContent className="pt-12 pb-12 text-center">
-                <div className={`h-24 w-24 mx-auto mb-8 rounded-2xl flex items-center justify-center transform -rotate-3 ${
+              <CardContent className="pt-8 pb-8 md:pt-12 md:pb-12 text-center">
+                <div className={`h-16 w-16 md:h-24 md:w-24 mx-auto mb-4 md:mb-8 rounded-2xl flex items-center justify-center transform -rotate-3 ${
                   darkMode 
                     ? 'bg-gradient-to-br from-slate-600 to-slate-700 shadow-lg' 
                     : 'bg-gradient-to-br from-slate-200 to-slate-300 shadow-lg'
                 }`}>
-                  <Users className={`h-12 w-12 ${darkMode ? 'text-white' : 'text-slate-700'}`} />
+                  <Users className={`h-8 w-8 md:h-12 md:w-12 ${darkMode ? 'text-white' : 'text-slate-700'}`} />
                 </div>
-                <h3 className={`text-2xl font-bold mb-3 ${t.text}`}>Join as Client</h3>
-                <p className={`mb-8 ${t.textMuted}`}>
+                <h3 className={`text-xl md:text-2xl font-bold mb-2 ${t.text}`}>Join as Client</h3>
+                <p className={`mb-6 md:mb-8 text-sm md:text-base ${t.textMuted}`}>
                   Get instant legal advice from verified lawyers via video call
                 </p>
                 <Button 
                   size="lg" 
                   variant="outline"
-                  className={`w-full h-14 text-base font-semibold ${
+                  className={`w-full h-12 md:h-14 text-sm md:text-base font-semibold ${
                     darkMode 
                       ? 'border-slate-600 text-white hover:bg-slate-800' 
                       : 'border-slate-300 text-slate-900 hover:bg-slate-50'
