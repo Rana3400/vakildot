@@ -99,7 +99,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user_doc = db.collection('lawyers').document(user_id).get()
         if not user_doc.exists:
             raise HTTPException(status_code=401, detail="User not found")
-        return {**user_doc.to_dict(), 'id': user_id}
+        user_data = user_doc.to_dict()
+        user_data['id'] = user_id
+        return user_data
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except:
