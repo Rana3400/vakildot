@@ -100,17 +100,17 @@ const Welcome = () => {
     <div className={`min-h-screen ${t.bg} ${t.text}`}>
       {/* Header */}
       <header className={`${t.headerBg} ${t.border} border-b sticky top-0 z-50 shadow-sm`}>
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-            <div className={`p-2 rounded-lg ${darkMode ? 'bg-amber-500/20' : 'bg-amber-50'}`}>
-              <Scale className={`h-7 w-7 ${t.accentText}`} />
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => navigate('/')}>
+            <div className={`p-1.5 rounded-lg ${darkMode ? 'bg-amber-500/20' : 'bg-amber-50'}`}>
+              <Scale className={`h-6 w-6 ${t.accentText}`} />
             </div>
-            <div>
-              <span className="text-2xl font-bold tracking-tight">VakilDot</span>
-              <p className={`text-[10px] uppercase tracking-widest ${t.textMuted}`}>Legal Excellence</p>
-            </div>
+            <span className="text-xl font-bold tracking-tight">VakilDot</span>
           </div>
-          <nav className="flex items-center gap-6">
+
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-6">
             <a href="#about" className={`text-sm font-medium ${t.textMuted} hover:${t.text} transition-colors`}>About</a>
             <a href="#lawyers" className={`text-sm font-medium ${t.textMuted} hover:${t.text} transition-colors`}>Find Lawyer</a>
             <Button 
@@ -122,13 +122,60 @@ const Welcome = () => {
               {darkMode ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5 text-slate-600" />}
             </Button>
             <Button 
+              data-testid="header-signin-btn"
               className={`${darkMode ? 'bg-amber-500 hover:bg-amber-600 text-slate-900' : 'bg-slate-900 hover:bg-slate-800 text-white'} font-semibold px-6`}
               onClick={() => navigate('/signin')}
             >
               Sign In
             </Button>
           </nav>
+
+          {/* Mobile: Sign In + Hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            <Button 
+              data-testid="mobile-signin-btn"
+              size="sm"
+              className={`${darkMode ? 'bg-amber-500 hover:bg-amber-600 text-slate-900' : 'bg-slate-900 hover:bg-slate-800 text-white'} font-semibold px-4 text-xs`}
+              onClick={() => navigate('/signin')}
+            >
+              Sign In
+            </Button>
+            <button
+              data-testid="mobile-menu-toggle"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`p-2 rounded-lg ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'} transition-colors`}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className={`md:hidden border-t ${t.border} ${darkMode ? 'bg-slate-900' : 'bg-white'} px-4 py-3 space-y-1`}>
+            <a 
+              href="#about" 
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-4 py-3 rounded-lg text-sm font-medium ${t.textMuted} ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'} transition-colors`}
+            >
+              About
+            </a>
+            <a 
+              href="#lawyers" 
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-4 py-3 rounded-lg text-sm font-medium ${t.textMuted} ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'} transition-colors`}
+            >
+              Find Lawyer
+            </a>
+            <button
+              onClick={() => { setDarkMode(!darkMode); setMobileMenuOpen(false); }}
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium ${t.textMuted} ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'} transition-colors`}
+            >
+              {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </button>
+          </div>
+        )}
       </header>
 
       {/* SECTION 1: Join VakilDot Today - FIRST */}
