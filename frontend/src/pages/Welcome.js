@@ -452,10 +452,10 @@ const Welcome = () => {
             ))}
           </div>
           
-          <div className="text-center mt-12">
+          <div className="text-center mt-8 md:mt-12">
             <Button 
               size="lg" 
-              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-semibold px-10 h-14 shadow-lg shadow-amber-500/30"
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-semibold px-6 md:px-10 h-12 md:h-14 text-sm md:text-base shadow-lg shadow-amber-500/30"
               onClick={() => navigate('/asset-recovery')}
             >
               Check Your Eligibility
