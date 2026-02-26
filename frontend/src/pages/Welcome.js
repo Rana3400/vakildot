@@ -278,15 +278,15 @@ const Welcome = () => {
           <Button 
             data-testid="join-live-stream-btn"
             size="lg" 
-            className="mb-10 px-10 py-7 text-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/30 transform hover:scale-105 transition-all duration-300"
+            className="mb-6 md:mb-10 px-6 md:px-10 py-5 md:py-7 text-sm md:text-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/30 transform hover:scale-105 transition-all duration-300"
             onClick={() => navigate('/signin')}
           >
-            <Video className="h-6 w-6 mr-3" />
+            <Video className="h-5 w-5 md:h-6 md:w-6 mr-2 md:mr-3" />
             Join Live Stream
           </Button>
           
           {/* Filters */}
-          <div className="flex flex-wrap justify-center gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4 mb-4">
             <Select value={selectedState || 'all'} onValueChange={(v) => setSelectedState(v === 'all' ? '' : v)}>
               <SelectTrigger className={`w-[220px] h-12 ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} shadow-md`}>
                 <SelectValue placeholder="Select State" />
