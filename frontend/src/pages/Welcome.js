@@ -419,14 +419,14 @@ const Welcome = () => {
       </section>
 
       {/* SECTION 4: Asset Recovery */}
-      <section className={`py-20 px-4 ${darkMode ? 'bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800' : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'}`}>
+      <section className={`py-12 md:py-20 px-4 ${darkMode ? 'bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800' : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'}`}>
         <div className="max-w-6xl mx-auto">
-          <Badge className="block w-fit mx-auto mb-6 bg-amber-500/20 text-amber-400 border-amber-500/30 px-4 py-1.5">
-            <Award className="h-4 w-4 mr-2 inline" />
+          <Badge className="block w-fit mx-auto mb-4 md:mb-6 bg-amber-500/20 text-amber-400 border-amber-500/30 px-3 py-1 text-xs md:text-sm">
+            <Award className="h-3 w-3 md:h-4 md:w-4 mr-1.5 inline" />
             Specialized Service
           </Badge>
-          <h2 className="text-4xl font-bold text-center mb-4 text-white">Asset Recovery Services</h2>
-          <p className="text-center mb-14 text-slate-300">Recover your unclaimed assets with expert legal help</p>
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-3 text-white">Asset Recovery Services</h2>
+          <p className="text-center mb-8 md:mb-14 text-slate-300 text-sm md:text-base">Recover your unclaimed assets with expert legal help</p>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
