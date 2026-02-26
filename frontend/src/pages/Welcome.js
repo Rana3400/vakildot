@@ -19,6 +19,7 @@ const Welcome = () => {
   const [selectedState, setSelectedState] = useState('');
   const [selectedCourt, setSelectedCourt] = useState('');
   const [darkMode, setDarkMode] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetchStates();
