@@ -52,13 +52,27 @@ class LawyerStatus(BaseModel):
 async def go_live(data: LawyerStatus):
     """Toggle lawyer's live status - PERSISTENT"""
     try:
+        # Always fetch latest profile photo from lawyers collection
+        photo_url = data.photo_url
+        lawyer_name = data.name
+        lawyer_court = data.court
+        try:
+            lawyer_doc = db.collection('lawyers').document(data.lawyer_id).get()
+            if lawyer_doc.exists:
+                ld = lawyer_doc.to_dict()
+                photo_url = ld.get('photo_url') or data.photo_url
+                lawyer_name = ld.get('name') or data.name
+                lawyer_court = ld.get('court') or data.court
+        except Exception:
+            pass
+
         live_data = {
             "lawyer_id": data.lawyer_id,
             "is_live": data.is_live,
             "rate_per_minute": data.rate_per_minute,
-            "name": data.name,
-            "photo_url": data.photo_url,
-            "court": data.court,
+            "name": lawyer_name,
+            "photo_url": photo_url,
+            "court": lawyer_court,
             "specialization": data.specialization,
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
