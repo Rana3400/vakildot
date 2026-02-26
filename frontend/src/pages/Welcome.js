@@ -311,29 +311,30 @@ const Welcome = () => {
       </section>
 
       {/* SECTION 3: Live Lawyers Slider */}
-      <section id="lawyers" className={`py-12 px-4 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      <section id="lawyers" className={`py-8 md:py-12 px-4 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-4 w-4 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
-            <h2 className={`text-3xl font-bold ${t.text}`}>Live Now</h2>
-            <Badge className="bg-red-500 text-white px-3 py-1">{lawyers.length} Online</Badge>
+          <div className="flex items-center gap-3 mb-6 md:mb-8">
+            <div className="h-3 w-3 md:h-4 md:w-4 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
+            <h2 className={`text-2xl md:text-3xl font-bold ${t.text}`}>Live Now</h2>
+            <Badge className="bg-red-500 text-white px-2 py-0.5 text-xs md:px-3 md:py-1">{lawyers.length} Online</Badge>
           </div>
 
           <div className="relative">
+            {/* Hide nav arrows on mobile */}
             <Button 
               variant="outline" 
               size="icon" 
-              className={`absolute -left-2 top-1/2 -translate-y-1/2 z-10 rounded-full h-14 w-14 shadow-xl ${darkMode ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : 'bg-white hover:bg-slate-50'}`}
+              className={`hidden md:flex absolute -left-2 top-1/2 -translate-y-1/2 z-10 rounded-full h-14 w-14 shadow-xl ${darkMode ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : 'bg-white hover:bg-slate-50'}`}
               onClick={() => scrollContainer('left')}
             >
               <ChevronLeft className="h-7 w-7" />
             </Button>
 
-            <div id="lawyers-slider" className="flex gap-6 overflow-x-auto px-4 py-6" style={{ scrollbarWidth: 'none' }}>
+            <div id="lawyers-slider" className="flex gap-4 md:gap-6 overflow-x-auto px-1 md:px-4 py-4 md:py-6 snap-x snap-mandatory" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
               {lawyers.map(lawyer => (
                 <Card 
                   key={lawyer.id} 
-                  className={`w-[300px] flex-shrink-0 cursor-pointer overflow-hidden transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 ${
+                  className={`w-[260px] md:w-[300px] flex-shrink-0 snap-center cursor-pointer overflow-hidden transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 ${
                     darkMode 
                       ? 'bg-gradient-to-b from-slate-800 to-slate-900 border-slate-700 hover:border-amber-500/50' 
                       : 'bg-white border-slate-200 hover:border-amber-500'
@@ -342,13 +343,13 @@ const Welcome = () => {
                   onClick={() => navigate('/signin')}
                 >
                   {/* Card Header with Profile */}
-                  <div className={`relative h-52 ${darkMode ? 'bg-gradient-to-br from-slate-700 to-slate-800' : 'bg-gradient-to-br from-slate-100 to-slate-200'}`}>
+                  <div className={`relative h-40 md:h-52 ${darkMode ? 'bg-gradient-to-br from-slate-700 to-slate-800' : 'bg-gradient-to-br from-slate-100 to-slate-200'}`}>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="relative">
                         <div className={`absolute inset-0 rounded-full ${darkMode ? 'bg-amber-500/20' : 'bg-amber-100'} blur-xl scale-110`}></div>
-                        <Avatar className="h-36 w-36 border-4 border-white shadow-2xl relative z-10">
+                        <Avatar className="h-24 w-24 md:h-36 md:w-36 border-4 border-white shadow-2xl relative z-10">
                           {lawyer.profile_photo && <AvatarImage src={lawyer.profile_photo} alt={lawyer.name} className="object-cover" />}
-                          <AvatarFallback className={`text-4xl font-bold ${darkMode ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-slate-900' : 'bg-gradient-to-br from-slate-800 to-slate-900 text-white'}`}>
+                          <AvatarFallback className={`text-2xl md:text-4xl font-bold ${darkMode ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-slate-900' : 'bg-gradient-to-br from-slate-800 to-slate-900 text-white'}`}>
                             {lawyer.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
