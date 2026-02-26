@@ -465,13 +465,13 @@ const Welcome = () => {
       </section>
 
       {/* SECTION 5: About */}
-      <section id="about" className={`py-20 px-4 ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
+      <section id="about" className={`py-12 md:py-20 px-4 ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
         <div className="max-w-4xl mx-auto text-center">
-          <div className={`inline-flex items-center justify-center p-4 rounded-2xl mb-8 ${darkMode ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
-            <Scale className={`h-10 w-10 ${t.accentText}`} />
+          <div className={`inline-flex items-center justify-center p-3 md:p-4 rounded-2xl mb-6 md:mb-8 ${darkMode ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
+            <Scale className={`h-8 w-8 md:h-10 md:w-10 ${t.accentText}`} />
           </div>
-          <h2 className={`text-4xl font-bold mb-6 ${t.text}`}>About VakilDot</h2>
-          <p className={`text-lg leading-relaxed ${t.textMuted}`}>
+          <h2 className={`text-2xl md:text-4xl font-bold mb-4 md:mb-6 ${t.text}`}>About VakilDot</h2>
+          <p className={`text-sm md:text-lg leading-relaxed ${t.textMuted}`}>
             VakilDot is India's premier Legal-Tech platform connecting clients with verified advocates through instant video consultations. 
             Our pay-per-minute model ensures fair billing, while our Asset Recovery division specializes in reclaiming unclaimed shares, 
             insurance policies, bank deposits, and ancestral properties. Trusted by advocates across District Courts, High Courts, 
