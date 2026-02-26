@@ -23,6 +23,7 @@ import ConsultationRoom from '@/pages/ConsultationRoom';
 import AssetRecovery from '@/pages/AssetRecovery';
 import AdminPanel from '@/pages/AdminPanel';
 import CallHistory from '@/pages/CallHistory';
+import PWAInstallBanner from '@/components/PWAInstallBanner';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('vakildot_token'));
