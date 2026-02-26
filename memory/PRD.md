@@ -13,135 +13,90 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
 - **Video**: Agora SDK
 - **Payments**: Razorpay (Dummy mode for testing)
 - **Notifications**: Firebase Cloud Messaging (FCM)
+- **PWA**: Service Worker + Manifest (installable app)
 
 ---
 
 ## Features Status
 
-### ✅ Core Features (Completed)
+### Completed
 - Lawyer/Client Authentication (Firebase Phone OTP)
+- Role-Based Dashboards (Lawyer & Client separated)
 - Case Management with Court Dropdowns
 - Client Management with Photo Upload
 - Communication Hub (Webhook Integration)
 - Document Management
 - Calendar with Custom Reminders
-- Settings with Profile Edit
+- Settings with Profile Edit + Photo Upload (syncs to localStorage)
+- Live Consultation Module (Wallet, Agora, Billing)
+- Security: Alphanumeric Captcha + Hard Delete
+- RBAC: Strict role separation in routes and sidebars
+- PWA Support (manifest.json, service worker, install banner)
+- Hostinger VPS Deployment Guide
 
-### ✅ Live Consultation Module (Completed)
-1. **Live Lawyers Slider** - Horizontal carousel with state/court filters
-2. **Wallet System** - Dummy recharge, balance tracking
-3. **Video Consultation** - Agora SDK integration
-4. **Billing Engine** - 80/20 split (Lawyer/Platform)
+### Fixed in This Session (Feb 26, 2026)
+- Lawyer profile image flow: photo_url now syncs to localStorage on upload and go-live fetches latest from Firestore
+- Added missing `/api/client/my-lawyer` endpoint for client dashboard
+- `/api/client/my-cases` now returns `assigned_lawyer_id`
+- PWA: manifest.json, service-worker.js, app icons, install banner
+- Updated index.html with PWA meta tags
 
-### ✅ NEW FEATURES (Just Added)
-
-#### 1. Push Notifications (`/app/backend/push_notifications.py`)
-- FCM token registration
-- Notification types:
-  - Lawyer goes online
-  - Hearing reminders (1 day before)
-  - Payment received
-  - New message alerts
-- Scheduled notifications
-- Notification history
-
-#### 2. Chat During Call (`/app/backend/chat_module.py` + `/app/frontend/src/components/CallChat.jsx`)
-- Real-time WebSocket chat
-- Text messages
-- Image & Document sharing
-- Quick reply templates (Hindi + English)
-- Chat transcript saved
-
-#### 3. Call History & Recording (`/app/backend/call_history.py` + `/app/frontend/src/pages/CallHistory.jsx`)
-- Complete call logs
-- Duration, cost, billing breakdown
-- Chat transcript retrieval
-- Call rating system
-- Recording status tracking
-- Lawyer & client statistics
-
-#### 4. Admin Panel (`/app/backend/admin_panel.py` + `/app/frontend/src/pages/AdminPanel.jsx`)
-- **Dashboard**: Total users, revenue, calls, pending actions
-- **User Management**: View all, ban/unban, warnings
-- **Lawyer Verification**: Approve/reject pending lawyers
-- **Transaction History**: All calls with billing details
-- **Dispute Management**: Handle complaints
-- **Asset Recovery Leads**: Manage leads from quiz
+### Scaffolded (Not Fully Tested)
+- Push Notifications (backend module exists)
+- In-call Chat (WebSocket endpoint + component)
+- Call History (backend + frontend)
+- Admin Panel (backend + frontend)
 
 ---
 
 ## API Endpoints
 
-### Existing
-- `/api/auth/*` - Authentication
-- `/api/cases/*` - Case management
-- `/api/clients/*` - Client management
-- `/api/documents/*` - Documents
-- `/api/calendar/*` - Calendar
+### Auth
+- `POST /api/auth/check-existing` - Check if user exists
+- `POST /api/auth/register` - Register lawyer
+- `POST /api/auth/register-client` - Register client
+- `POST /api/auth/signin` - Sign in
+
+### Client-Specific
+- `GET /api/client/my-cases` - Client's own cases (+ assigned_lawyer_id)
+- `GET /api/client/my-lawyer` - Client's assigned lawyer with live status
+- `GET /api/client/my-documents` - Client's case documents
+- `GET /api/client/my-hearings` - Client's upcoming hearings
 
 ### Live Module
+- `POST /api/live/status/go-live` - Toggle live status (fetches latest photo)
+- `GET /api/live/status/{lawyer_id}` - Get live status
 - `GET /api/live/lawyers/live` - Get online lawyers
 - `GET /api/live/wallet/{user_id}` - Get wallet balance
 - `POST /api/live/wallet/recharge` - Add funds (dummy)
 - `POST /api/live/wallet/deduct` - Deduct with 80/20 split
 - `GET /api/live/agora-token` - Get Agora credentials
 
-### NEW: Push Notifications
-- `POST /api/notifications/register-token` - Register FCM token
-- `POST /api/notifications/send` - Send to single user
-- `POST /api/notifications/lawyer-online` - Notify clients
-- `POST /api/notifications/hearing-reminder` - Send reminder
-- `POST /api/notifications/payment-received` - Notify lawyer
-- `POST /api/notifications/new-message` - Message alert
-
-### NEW: Chat Module
-- `WebSocket /api/chat/ws/{session_id}` - Real-time chat
-- `POST /api/chat/send` - Send message (REST fallback)
-- `POST /api/chat/upload-file/{session_id}` - Upload image/document
-- `GET /api/chat/history/{session_id}` - Get chat transcript
-- `GET /api/chat/quick-replies` - Get templates
-
-### NEW: Call History
-- `POST /api/calls/start` - Start call session
-- `POST /api/calls/end` - End call with billing
-- `GET /api/calls/history/{user_id}` - Get user's call history
-- `GET /api/calls/detail/{session_id}` - Call details + chat
-- `POST /api/calls/rate` - Rate a call
-- `GET /api/calls/stats/lawyer/{lawyer_id}` - Lawyer statistics
-
-### NEW: Admin Panel
-- `POST /api/admin/login` - Admin authentication
-- `GET /api/admin/dashboard` - Dashboard stats
-- `GET /api/admin/users` - List all users
-- `POST /api/admin/users/action` - Ban/unban/verify
-- `GET /api/admin/verification/pending` - Pending lawyers
-- `POST /api/admin/verification/update` - Approve/reject
-- `GET /api/admin/transactions` - All transactions
-- `GET /api/admin/disputes` - Dispute list
-- `POST /api/admin/disputes/resolve` - Resolve dispute
+### Cases, Clients, Calendar, Documents, Profile
+- Full CRUD endpoints (see server.py)
 
 ---
 
-## Routes
+## Pending/Known Issues
+- Client signup may have captcha conflicts (Firebase reCAPTCHA + custom captcha)
+- Wallet system is MOCKED (dummy balance)
+- Agora token generation incomplete
+- End-to-end live consultation flow not fully tested
 
-### Public
-- `/` - Welcome (Sign Up options)
-- `/signin` - Sign In
-- `/signup/lawyer` - Lawyer registration
-- `/signup/client` - Client registration
-- `/asset-recovery` - Asset recovery quiz
-- `/admin` - Admin panel login
+## Upcoming Tasks
+- [ ] AI Agent for client enquiries
+- [ ] Fix client signup captcha conflict
+- [ ] End-to-end live consultation testing
+- [ ] Real Razorpay integration
+- [ ] PWA offline support enhancement
 
-### Protected
-- `/dashboard` - Dashboard
-- `/cases` - Case management
-- `/wallet` - Wallet & recharge
-- `/call-history` - Call history (NEW)
-- `/consultation/:lawyerId` - Video consultation + Chat
-- `/clients` - Client management (lawyer only)
-- `/documents` - Documents (lawyer only)
-- `/calendar` - Calendar (lawyer only)
-- `/settings` - Profile settings
+## Future/Backlog
+- [ ] AI Chat Manager (Legal FAQ)
+- [ ] Advanced user roles (Clerk, Junior Advocate)
+- [ ] Analytics dashboards
+- [ ] Google Calendar sync
+- [ ] Flutter/React Native mobile app
+- [ ] Call recording download
 
 ---
 
@@ -151,70 +106,4 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
 
 ---
 
-## Environment Variables
-
-### Backend (.env)
-```
-JWT_SECRET=vakildot-secret-key-2024
-AGORA_APP_ID=cb1117d8b0af48b7bb53e2536e717a21
-AGORA_APP_CERTIFICATE=00081798e38949d1a6d7a269ebc36b9d
-SUPABASE_URL=https://elxueimqqbcahlffwbcy.supabase.co
-SUPABASE_KEY=[provided]
-ADMIN_EMAILS=admin@vakildot.com
-ADMIN_PASSWORD=admin123
-```
-
-### Frontend (.env)
-```
-REACT_APP_BACKEND_URL=[deployment_url]
-REACT_APP_AGORA_APP_ID=cb1117d8b0af48b7bb53e2536e717a21
-```
-
----
-
-## Pending / Future Tasks
-
-### P1 - Next Priority
-- [ ] AI Chat Manager (Legal FAQ, Document analysis)
-- [ ] Real Razorpay integration
-- [ ] PWA setup for mobile
-
-### P2 - Future
-- [ ] Call recording download (Agora Cloud Recording)
-- [ ] Advanced analytics dashboard
-- [ ] Google Calendar sync
-- [ ] Flutter mobile app
-
----
-
-## File Structure
-
-```
-/app
-├── backend/
-│   ├── server.py              # Main FastAPI app
-│   ├── live_consultation.py   # Agora, Wallet, Sessions
-│   ├── push_notifications.py  # FCM notifications (NEW)
-│   ├── chat_module.py         # WebSocket chat (NEW)
-│   ├── call_history.py        # Call logs & recording (NEW)
-│   ├── admin_panel.py         # Admin dashboard (NEW)
-│   └── .env                   # Environment variables
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   └── CallChat.jsx   # Chat component (NEW)
-│   │   ├── pages/
-│   │   │   ├── Welcome.js     # Homepage
-│   │   │   ├── AdminPanel.jsx # Admin dashboard (NEW)
-│   │   │   ├── CallHistory.jsx # Call history page (NEW)
-│   │   │   ├── ConsultationRoom.js # Video call + chat
-│   │   │   └── ...
-│   │   └── App.js
-│   └── package.json
-└── memory/
-    └── PRD.md
-```
-
----
-
-Last Updated: February 15, 2026
+Last Updated: February 26, 2026
