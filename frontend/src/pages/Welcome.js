@@ -369,8 +369,8 @@ const Welcome = () => {
                     )}
                   </div>
                   
-                  <CardContent className="pt-5 pb-6">
-                    <h3 className={`font-bold text-xl mb-1 ${t.text}`}>{lawyer.name}</h3>
+                  <CardContent className="pt-4 pb-5 md:pt-5 md:pb-6">
+                    <h3 className={`font-bold text-lg md:text-xl mb-1 ${t.text}`}>{lawyer.name}</h3>
                     <p className={`text-sm ${t.textMuted} flex items-center gap-1`}>
                       <Gavel className="h-3 w-3" />
                       {lawyer.court}
