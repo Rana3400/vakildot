@@ -387,27 +387,6 @@ const ConsultationRoom = () => {
         </div>
       </Card>
 
-      {/* Billing Info */}
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="font-semibold mb-4">Billing Information</h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="p-4 bg-muted rounded-lg">
-              <p className="text-xl sm:text-2xl font-bold">₹{lawyer.rate_per_minute}</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Per Minute</p>
-            </div>
-            <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-              <p className="text-xl sm:text-2xl font-bold text-green-600">80%</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">To Lawyer</p>
-            </div>
-            <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-              <p className="text-xl sm:text-2xl font-bold text-blue-600">20%</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Platform Fee</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Chat */}
       {sessionId && (
         <CallChat

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { User, Upload, Save, Mail, Phone, MapPin, Briefcase, Building, LogOut } from 'lucide-react';
+import { User, Upload, Save, Mail, Phone, MapPin, Briefcase, Building, LogOut, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,19 +18,12 @@ const INDIAN_COURTS = ['Supreme Court of India', 'Delhi High Court', 'Bombay Hig
 
 const Settings = ({ user }) => {
   const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    mobile: '',
-    practice_field: '',
-    court: '',
-    lawyer_type: '',
-    chamber_number: '',
-    address: '',
-    bio: '',
-    photo_url: ''
+    name: '', email: '', mobile: '', address: '', photo_url: '',
+    practice_field: '', court: '', lawyer_type: '', chamber_number: '', bio: ''
   });
   const [saving, setSaving] = useState(false);
   const token = localStorage.getItem('vakildot_token');
+  const isClient = user?.user_role === 'client';
 
   useEffect(() => {
     if (user) {
@@ -38,13 +31,13 @@ const Settings = ({ user }) => {
         name: user.name || '',
         email: user.email || '',
         mobile: user.mobile || '',
+        address: user.address || '',
+        photo_url: user.photo_url || '',
         practice_field: user.practice_field || '',
         court: user.court || '',
         lawyer_type: user.lawyer_type || '',
         chamber_number: user.chamber_number || '',
-        address: user.address || '',
-        bio: user.bio || '',
-        photo_url: user.photo_url || ''
+        bio: user.bio || ''
       });
     }
   }, [user]);
@@ -60,7 +53,6 @@ const Settings = ({ user }) => {
       });
       const newPhotoUrl = res.data.photo_url;
       setProfile(p => ({ ...p, photo_url: newPhotoUrl }));
-      // Sync to localStorage immediately so Go Live picks it up
       const storedUser = JSON.parse(localStorage.getItem('vakildot_user') || '{}');
       storedUser.photo_url = newPhotoUrl;
       localStorage.setItem('vakildot_user', JSON.stringify(storedUser));
@@ -85,8 +77,7 @@ const Settings = ({ user }) => {
 
   const handleDeleteAccount = async () => {
     if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
-    if (!window.confirm('All your data including cases, clients, and documents will be permanently deleted. Continue?')) return;
-    
+    if (!window.confirm('All your data will be permanently deleted. Continue?')) return;
     try {
       await axios.delete(`${API}/profile`, { headers: { Authorization: `Bearer ${token}` } });
       localStorage.clear();
@@ -97,14 +88,19 @@ const Settings = ({ user }) => {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div data-testid="settings-page" className="space-y-6 max-w-3xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground mt-1">Manage your profile and preferences</p>
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-5 w-5" />Profile Information</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            {isClient ? 'Personal Information' : 'Profile Information'}
+          </CardTitle>
+        </CardHeader>
         <CardContent className="space-y-6">
           {/* Photo Upload */}
           <div className="flex items-center gap-6">
@@ -120,77 +116,87 @@ const Settings = ({ user }) => {
             </div>
             <div>
               <h3 className="font-semibold">{profile.name || 'Your Name'}</h3>
-              <p className="text-sm text-muted-foreground">{profile.lawyer_type || 'Advocate'}</p>
+              <p className="text-sm text-muted-foreground">{isClient ? 'Client' : (profile.lawyer_type || 'Advocate')}</p>
               <p className="text-xs text-muted-foreground mt-1">Click the camera icon to upload a new photo</p>
             </div>
           </div>
 
-          {/* Basic Info */}
+          {/* Basic Info - Same for both roles */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><User className="h-4 w-4" />Full Name *</Label>
-              <Input value={profile.name} onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="Your full name" />
+              <Input data-testid="settings-name" value={profile.name} onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="Your full name" />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><Mail className="h-4 w-4" />Email *</Label>
-              <Input type="email" value={profile.email} onChange={(e) => setProfile(p => ({ ...p, email: e.target.value }))} placeholder="your@email.com" />
+              <Input data-testid="settings-email" type="email" value={profile.email} onChange={(e) => setProfile(p => ({ ...p, email: e.target.value }))} placeholder="your@email.com" />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><Phone className="h-4 w-4" />Mobile</Label>
               <Input value={profile.mobile} disabled className="bg-muted" />
               <p className="text-xs text-muted-foreground">Phone number cannot be changed</p>
             </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Building className="h-4 w-4" />Chamber Number</Label>
-              <Input value={profile.chamber_number} onChange={(e) => setProfile(p => ({ ...p, chamber_number: e.target.value }))} placeholder="Chamber No." />
-            </div>
+            {isClient ? (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Home className="h-4 w-4" />Address</Label>
+                <Input data-testid="settings-address" value={profile.address} onChange={(e) => setProfile(p => ({ ...p, address: e.target.value }))} placeholder="Your address" />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Building className="h-4 w-4" />Chamber Number</Label>
+                <Input value={profile.chamber_number} onChange={(e) => setProfile(p => ({ ...p, chamber_number: e.target.value }))} placeholder="Chamber No." />
+              </div>
+            )}
           </div>
 
-          {/* Professional Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Briefcase className="h-4 w-4" />Practice Field</Label>
-              <Select value={profile.practice_field} onValueChange={(v) => setProfile(p => ({ ...p, practice_field: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select field" /></SelectTrigger>
-                <SelectContent>
-                  {PRACTICE_FIELDS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Building className="h-4 w-4" />Primary Court</Label>
-              <Select value={profile.court} onValueChange={(v) => setProfile(p => ({ ...p, court: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select court" /></SelectTrigger>
-                <SelectContent>
-                  {INDIAN_COURTS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label className="flex items-center gap-2"><User className="h-4 w-4" />Type</Label>
-              <Select value={profile.lawyer_type} onValueChange={(v) => setProfile(p => ({ ...p, lawyer_type: v }))}>
-                <SelectTrigger><SelectValue placeholder="Advocate or Practitioner" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Advocate">Advocate</SelectItem>
-                  <SelectItem value="Practitioner">Practitioner</SelectItem>
-                  <SelectItem value="Senior Advocate">Senior Advocate</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          {/* Lawyer-only Professional Info */}
+          {!isClient && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Briefcase className="h-4 w-4" />Practice Field</Label>
+                  <Select value={profile.practice_field} onValueChange={(v) => setProfile(p => ({ ...p, practice_field: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Select field" /></SelectTrigger>
+                    <SelectContent>
+                      {PRACTICE_FIELDS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Building className="h-4 w-4" />Primary Court</Label>
+                  <Select value={profile.court} onValueChange={(v) => setProfile(p => ({ ...p, court: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Select court" /></SelectTrigger>
+                    <SelectContent>
+                      {INDIAN_COURTS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="flex items-center gap-2"><User className="h-4 w-4" />Type</Label>
+                  <Select value={profile.lawyer_type} onValueChange={(v) => setProfile(p => ({ ...p, lawyer_type: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Advocate or Practitioner" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Advocate">Advocate</SelectItem>
+                      <SelectItem value="Practitioner">Practitioner</SelectItem>
+                      <SelectItem value="Senior Advocate">Senior Advocate</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-          {/* Address & Bio */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2"><MapPin className="h-4 w-4" />Office Address</Label>
-            <Textarea value={profile.address} onChange={(e) => setProfile(p => ({ ...p, address: e.target.value }))} placeholder="Your office/chamber address" rows={2} />
-          </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><MapPin className="h-4 w-4" />Office Address</Label>
+                <Textarea value={profile.address} onChange={(e) => setProfile(p => ({ ...p, address: e.target.value }))} placeholder="Your office/chamber address" rows={2} />
+              </div>
 
-          <div className="space-y-2">
-            <Label>Bio / About</Label>
-            <Textarea value={profile.bio} onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))} placeholder="Brief description about your practice..." rows={3} />
-          </div>
+              <div className="space-y-2">
+                <Label>Bio / About</Label>
+                <Textarea value={profile.bio} onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))} placeholder="Brief description about your practice..." rows={3} />
+              </div>
+            </>
+          )}
 
-          <Button onClick={handleSave} disabled={saving} className="w-full">
+          <Button data-testid="save-settings-btn" onClick={handleSave} disabled={saving} className="w-full">
             <Save className="h-4 w-4 mr-2" />{saving ? 'Saving...' : 'Save Changes'}
           </Button>
         </CardContent>
@@ -203,10 +209,9 @@ const Settings = ({ user }) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Permanently delete your account and all associated data (cases, clients, documents, call history). 
-            This action cannot be undone and your data will be immediately purged from all systems.
+            Permanently delete your account and all associated data. This action cannot be undone.
           </p>
-          <Button variant="destructive" onClick={handleDeleteAccount}>
+          <Button variant="destructive" data-testid="delete-account-btn" onClick={handleDeleteAccount}>
             <LogOut className="h-4 w-4 mr-2" />Delete My Account Permanently
           </Button>
         </CardContent>

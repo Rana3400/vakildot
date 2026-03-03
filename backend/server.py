@@ -96,9 +96,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user_id = payload.get('user_id')
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
+        # Check lawyers collection first
         user_doc = db.collection('lawyers').document(user_id).get()
         if not user_doc.exists:
-            raise HTTPException(status_code=401, detail="User not found")
+            # Check clients collection
+            user_doc = db.collection('clients').document(user_id).get()
+            if not user_doc.exists:
+                raise HTTPException(status_code=401, detail="User not found")
         user_data = user_doc.to_dict()
         user_data['id'] = user_id
         return user_data

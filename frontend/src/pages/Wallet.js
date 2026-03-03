@@ -227,28 +227,6 @@ const WalletPage = () => {
         </CardContent>
       </Card>
 
-      {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-green-600">80%</p>
-            <p className="text-sm text-muted-foreground mt-1">Goes to Lawyer</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-blue-600">20%</p>
-            <p className="text-sm text-muted-foreground mt-1">Platform Fee</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-orange-600">5 min</p>
-            <p className="text-sm text-muted-foreground mt-1">Minimum Balance</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Transaction History */}
       <Card>
         <CardHeader>
