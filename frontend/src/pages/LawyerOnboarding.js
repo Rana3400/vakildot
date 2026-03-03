@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Scale, ArrowLeft } from 'lucide-react';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { sendOTP, verifyOTP, saveUserToFirestore } from '@/firebase';
 import SimpleCaptcha from '@/components/SimpleCaptcha';
@@ -20,28 +20,33 @@ const PRACTICE_FIELDS = [
   'Environmental Law', 'Cyber Law', 'Consumer Protection', 'Immigration Law', 'Human Rights'
 ];
 
-const INDIAN_COURTS = [
-  'Supreme Court of India', 'Delhi High Court', 'Bombay High Court', 'Calcutta High Court',
-  'Madras High Court', 'Karnataka High Court', 'Gujarat High Court', 'Allahabad High Court',
-  'Punjab & Haryana High Court', 'Rajasthan High Court', 'Kerala High Court', 'Telangana High Court',
-  'Andhra Pradesh High Court', 'Patna High Court', 'Jharkhand High Court', 'Orissa High Court',
-  'Chhattisgarh High Court', 'Madhya Pradesh High Court', 'Uttarakhand High Court',
-  'Himachal Pradesh High Court', 'Jammu & Kashmir High Court', 'Gauhati High Court',
-  'District Court', 'Sessions Court', 'Magistrate Court', 'Consumer Forum', 'Labour Court',
-  'Family Court', 'Tribunal'
-];
-
 const LawyerOnboarding = ({ onComplete }) => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '', email: '', mobile: '', practice_field: '', court: '',
+    name: '', email: '', mobile: '', practice_field: '', state: '', court: '',
     lawyer_type: '', chamber_number: '', bar_council_number: '',
     practice_areas: [], courts: [], role: 'senior_advocate'
   });
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [states, setStates] = useState([]);
+  const [courtGroups, setCourtGroups] = useState({});
+
+  useEffect(() => {
+    axios.get(`${API}/live/filters/states`).then(res => setStates(res.data.states || [])).catch(() => {});
+  }, []);
+
+  const handleStateChange = async (state) => {
+    setFormData(prev => ({ ...prev, state, court: '' }));
+    try {
+      const res = await axios.get(`${API}/live/filters/courts/${encodeURIComponent(state)}`);
+      setCourtGroups(res.data.grouped || {});
+    } catch {
+      setCourtGroups({});
+    }
+  };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -194,11 +199,27 @@ const LawyerOnboarding = ({ onComplete }) => {
                 </div>
 
                 <div className="space-y-1">
+                  <Label>State / UT *</Label>
+                  <Select value={formData.state} onValueChange={handleStateChange}>
+                    <SelectTrigger><SelectValue placeholder="Select your state" /></SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="National">National (Supreme Court / Tribunals)</SelectItem>
+                      {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
                   <Label>Court *</Label>
-                  <Select value={formData.court} onValueChange={(value) => setFormData(prev => ({ ...prev, court: value }))}>
-                    <SelectTrigger><SelectValue placeholder="Select your court" /></SelectTrigger>
-                    <SelectContent>
-                      {INDIAN_COURTS.map(court => <SelectItem key={court} value={court}>{court}</SelectItem>)}
+                  <Select value={formData.court} onValueChange={(value) => setFormData(prev => ({ ...prev, court: value }))} disabled={!formData.state}>
+                    <SelectTrigger><SelectValue placeholder={formData.state ? "Select your court" : "Select state first"} /></SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {Object.entries(courtGroups).map(([group, courts]) => (
+                        <SelectGroup key={group}>
+                          <SelectLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{group}</SelectLabel>
+                          {courts.map(court => <SelectItem key={court} value={court}>{court}</SelectItem>)}
+                        </SelectGroup>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

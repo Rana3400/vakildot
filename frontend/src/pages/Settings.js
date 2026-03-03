@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -19,9 +19,10 @@ const INDIAN_COURTS = ['Supreme Court of India', 'Delhi High Court', 'Bombay Hig
 const Settings = ({ user }) => {
   const [profile, setProfile] = useState({
     name: '', email: '', mobile: '', address: '', photo_url: '',
-    practice_field: '', court: '', lawyer_type: '', chamber_number: '', bio: ''
+    practice_field: '', state: '', court: '', lawyer_type: '', chamber_number: '', bio: ''
   });
   const [saving, setSaving] = useState(false);
+  const [courtGroups, setCourtGroups] = useState({});
   const token = localStorage.getItem('vakildot_token');
   const isClient = user?.user_role === 'client';
 
@@ -34,13 +35,29 @@ const Settings = ({ user }) => {
         address: user.address || '',
         photo_url: user.photo_url || '',
         practice_field: user.practice_field || '',
+        state: user.state || '',
         court: user.court || '',
         lawyer_type: user.lawyer_type || '',
         chamber_number: user.chamber_number || '',
         bio: user.bio || ''
       });
+      // Load courts for existing state
+      if (user.state) {
+        axios.get(`${API}/live/filters/courts/${encodeURIComponent(user.state)}`)
+          .then(res => setCourtGroups(res.data.grouped || {})).catch(() => {});
+      }
     }
   }, [user]);
+
+  const handleStateChange = async (state) => {
+    setProfile(p => ({ ...p, state, court: '' }));
+    try {
+      const res = await axios.get(`${API}/live/filters/courts/${encodeURIComponent(state)}`);
+      setCourtGroups(res.data.grouped || {});
+    } catch {
+      setCourtGroups({});
+    }
+  };
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
@@ -163,11 +180,26 @@ const Settings = ({ user }) => {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Building className="h-4 w-4" />State / UT</Label>
+                  <Select value={profile.state} onValueChange={handleStateChange}>
+                    <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="National">National (Supreme Court / Tribunals)</SelectItem>
+                      {PRACTICE_FIELDS.length > 0 && ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Chandigarh','Delhi','Goa','Gujarat','Haryana','Himachal Pradesh','Jammu & Kashmir','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Puducherry','Ladakh'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label className="flex items-center gap-2"><Building className="h-4 w-4" />Primary Court</Label>
-                  <Select value={profile.court} onValueChange={(v) => setProfile(p => ({ ...p, court: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Select court" /></SelectTrigger>
-                    <SelectContent>
-                      {INDIAN_COURTS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  <Select value={profile.court} onValueChange={(v) => setProfile(p => ({ ...p, court: v }))} disabled={!profile.state}>
+                    <SelectTrigger><SelectValue placeholder={profile.state ? "Select court" : "Select state first"} /></SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {Object.entries(courtGroups).map(([group, courts]) => (
+                        <SelectGroup key={group}>
+                          <SelectLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{group}</SelectLabel>
+                          {courts.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectGroup>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

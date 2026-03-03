@@ -157,7 +157,7 @@ const WalletPage = () => {
               <p className="text-sm opacity-70">Available Balance</p>
               <p className="text-4xl font-bold font-mono mt-2">₹{balance.toFixed(2)}</p>
               <p className="text-sm opacity-70 mt-2">
-                ≈ {Math.floor(balance / 30)} minutes @ ₹30/min
+                ≈ {Math.floor(balance / 20)} minutes @ ₹20/min
               </p>
             </div>
             <div className="h-16 w-16 rounded-2xl bg-amber-500/20 flex items-center justify-center">

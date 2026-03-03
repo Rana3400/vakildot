@@ -63,7 +63,7 @@ const ClientDashboard = () => {
   };
 
   const handleConsult = (lawyer) => {
-    const minBalance = (lawyer.rate_per_minute || 30) * 5;
+    const minBalance = (lawyer.rate_per_minute || 20) * 5;
     if ((wallet.balance || 0) < minBalance) {
       toast.error(`Minimum ₹${minBalance} required. Please add money to wallet.`);
       navigate('/wallet');
@@ -165,7 +165,7 @@ const ClientDashboard = () => {
                         <div className="flex items-center gap-2 mt-1">
                           <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                           <span className="text-xs font-medium">{lawyer.rating || 4.8}</span>
-                          <Badge variant="outline" className="text-xs px-1.5 py-0">₹{lawyer.rate_per_minute || 30}/min</Badge>
+                          <Badge variant="outline" className="text-xs px-1.5 py-0">₹{lawyer.rate_per_minute || 20}/min</Badge>
                         </div>
                       </div>
                     </div>

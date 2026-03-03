@@ -1,0 +1,116 @@
+{
+  "summary": "Iteration 5 - Wallet Firestore migration, Court grouping, and Rate change (₹20/min) all verified. Backend: 11/11 tests passed (100%). Frontend: All features tested and working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_wallet_courts_iter5.py",
+    "/app/test_reports/pytest/pytest_results_iter5.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Wallet.js fixed: Changed rate display from ₹30/min to ₹20/min (line 160)",
+    "Backend DEFAULT_RATE correctly set to 20 in live_consultation.py (line 32)",
+    "Wallet endpoints (recharge, balance, deduct) now use Firestore - verified working",
+    "Court API returns 'grouped' structure with High Court, District Courts, Other Courts",
+    "Chandigarh courts correctly include 'Chandigarh District Court, Sector 43'",
+    "Delhi courts correctly include 'Patiala House Court' and 'Tis Hazari Court'",
+    "National courts include 'Supreme Court of India' and 'NCLT'",
+    "80%/20%/5min business info cards verified REMOVED from Wallet page"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_wallet_courts_iter5.py",
+    "/app/frontend/src/pages/Wallet.js"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (All features verified)"
+  },
+  "test_credentials": {
+    "test_users_created": "test_wallet_*, test_balance_*, test_multi_*, test_razorpay_*, test_history_* (for backend tests)"
+  },
+  "seed_data_creation": "Test wallet entries created in Firestore for testing recharge/balance functionality",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Wallet now uses Firestore instead of Supabase. Rate changed from ₹30 to ₹20/min. Existing live lawyers may still show old rate (30) as per expected behavior - only new lawyers and demo data use rate=20. Court selection now shows grouped options (High Court, District Courts, Other Courts) per state.",
+  "features_tested": {
+    "wallet_firestore": {
+      "status": "PASS",
+      "details": [
+        "POST /api/live/wallet/recharge credits wallet in Firestore",
+        "GET /api/live/wallet/{user_id} returns correct balance",
+        "Multiple recharges accumulate correctly",
+        "Wallet balance persisted in Firestore"
+      ]
+    },
+    "razorpay_integration": {
+      "status": "PASS",
+      "details": [
+        "POST /api/live/razorpay/create-order creates valid Razorpay order",
+        "Order ID starts with 'order_'",
+        "Amount converted to paise correctly",
+        "Live Razorpay key (rzp_live_*) returned"
+      ]
+    },
+    "court_grouping": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/filters/states returns all Indian states including Chandigarh",
+        "GET /api/live/filters/courts/Chandigarh returns grouped courts with 'Chandigarh District Court, Sector 43'",
+        "GET /api/live/filters/courts/Delhi returns 'Patiala House Court', 'Tis Hazari Court', 'Delhi High Court'",
+        "GET /api/live/filters/courts/National returns Supreme Court, NCLT",
+        "Frontend LawyerOnboarding shows grouped court dropdown correctly"
+      ]
+    },
+    "rate_change": {
+      "status": "PASS",
+      "details": [
+        "Backend DEFAULT_RATE = 20",
+        "Wallet page shows '₹20/min' (fixed from ₹30/min)",
+        "Demo lawyers in API have rate_per_minute=20",
+        "Existing live lawyers may have old rate (30) - expected behavior"
+      ]
+    },
+    "wallet_page_ui": {
+      "status": "PASS",
+      "details": [
+        "Add Money button present",
+        "80% lawyer share card REMOVED",
+        "20% platform fee card REMOVED",
+        "5 minute minimum card REMOVED",
+        "Transaction History section present"
+      ]
+    },
+    "client_dashboard": {
+      "status": "PASS",
+      "details": [
+        "Shows all live lawyers",
+        "Consult Now button present for each lawyer",
+        "Rate displayed per lawyer",
+        "2 Online badge showing"
+      ]
+    },
+    "live_lawyers_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/lawyers/live returns live lawyers from Firestore",
+        "Structure includes id, name, rate_per_minute, is_live, etc.",
+        "Currently 2 lawyers online (Puneet Anand, Raj Sharma)"
+      ]
+    },
+    "billing_history": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/billing/history/{user_id} returns empty history for new users",
+        "Returns list format"
+      ]
+    }
+  },
+  "mocked_apis_note": "NONE - All integrations use LIVE credentials: Razorpay live keys, Agora real credentials, Firebase Firestore"
+}

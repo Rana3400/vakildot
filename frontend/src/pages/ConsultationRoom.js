@@ -47,7 +47,7 @@ const ConsultationRoom = () => {
       const res = await axios.get(`${API}/live/lawyers/live`);
       const found = res.data.lawyers.find(l => l.id === lawyerId);
       setLawyer(found || {
-        id: lawyerId, name: 'Advocate', rate_per_minute: 30,
+        id: lawyerId, name: 'Advocate', rate_per_minute: 20,
         specialization: 'Legal Consultation', is_verified: true
       });
     } catch (e) {

@@ -20,12 +20,6 @@ router = APIRouter(prefix="/api/live", tags=["Live Consultation"])
 # Firestore
 db = firestore.client()
 
-# Supabase setup for wallet
-from supabase import create_client
-SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
-SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL else None
-
 # Agora credentials
 AGORA_APP_ID = os.environ.get('AGORA_APP_ID', '')
 AGORA_APP_CERTIFICATE = os.environ.get('AGORA_APP_CERTIFICATE', '')
@@ -34,6 +28,8 @@ AGORA_APP_CERTIFICATE = os.environ.get('AGORA_APP_CERTIFICATE', '')
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
 razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if RAZORPAY_KEY_ID else None
+
+DEFAULT_RATE = 20  # ₹20 per minute
 
 # Models
 class WalletRecharge(BaseModel):
@@ -48,7 +44,7 @@ class StartSession(BaseModel):
 class LawyerStatus(BaseModel):
     lawyer_id: str
     is_live: bool
-    rate_per_minute: float = 30.0
+    rate_per_minute: float = 20.0
     name: Optional[str] = None
     photo_url: Optional[str] = None
     court: Optional[str] = None
@@ -129,12 +125,12 @@ async def get_live_status(lawyer_id: str):
             data = doc.to_dict()
             return {
                 "is_live": data.get('is_live', False),
-                "rate_per_minute": data.get('rate_per_minute', 30),
+                "rate_per_minute": data.get('rate_per_minute', DEFAULT_RATE),
                 "last_updated": data.get('updated_at')
             }
-        return {"is_live": False, "rate_per_minute": 30}
+        return {"is_live": False, "rate_per_minute": DEFAULT_RATE}
     except:
-        return {"is_live": False, "rate_per_minute": 30}
+        return {"is_live": False, "rate_per_minute": DEFAULT_RATE}
 
 @router.get("/lawyers/live")
 async def get_live_lawyers(state: Optional[str] = None, court: Optional[str] = None):
@@ -155,7 +151,7 @@ async def get_live_lawyers(state: Optional[str] = None, court: Optional[str] = N
                     "name": lawyer_data.get('name', data.get('name', 'Advocate')),
                     "profile_photo": lawyer_data.get('photo_url') or data.get('photo_url'),
                     "photo_url": lawyer_data.get('photo_url') or data.get('photo_url'),
-                    "rate_per_minute": data.get('rate_per_minute', 30),
+                    "rate_per_minute": data.get('rate_per_minute', DEFAULT_RATE),
                     "specialization": lawyer_data.get('practice_field', data.get('specialization', 'Legal')),
                     "state": lawyer_data.get('state', ''),
                     "court": lawyer_data.get('court', data.get('court', '')),
@@ -173,7 +169,7 @@ async def get_live_lawyers(state: Optional[str] = None, court: Optional[str] = N
                     "id": "lawyer1",
                     "name": "Adv. Rajesh Kumar",
                     "profile_photo": None,
-                    "rate_per_minute": 30,
+                    "rate_per_minute": DEFAULT_RATE,
                     "specialization": "Criminal Law",
                     "state": "Punjab",
                     "court": "Punjab High Court",
@@ -186,7 +182,7 @@ async def get_live_lawyers(state: Optional[str] = None, court: Optional[str] = N
                     "id": "lawyer2",
                     "name": "Adv. Priya Sharma",
                     "profile_photo": None,
-                    "rate_per_minute": 50,
+                    "rate_per_minute": 20,
                     "specialization": "Family Law",
                     "state": "Delhi",
                     "court": "Delhi High Court",
@@ -199,7 +195,7 @@ async def get_live_lawyers(state: Optional[str] = None, court: Optional[str] = N
                     "id": "lawyer3",
                     "name": "Adv. Amit Singh",
                     "profile_photo": None,
-                    "rate_per_minute": 25,
+                    "rate_per_minute": 20,
                     "specialization": "Property Law",
                     "state": "Maharashtra",
                     "court": "Bombay High Court",
@@ -212,7 +208,7 @@ async def get_live_lawyers(state: Optional[str] = None, court: Optional[str] = N
                     "id": "lawyer4",
                     "name": "Adv. Neha Gupta",
                     "profile_photo": None,
-                    "rate_per_minute": 40,
+                    "rate_per_minute": 20,
                     "specialization": "Corporate Law",
                     "state": "Karnataka",
                     "court": "Karnataka High Court",
@@ -237,76 +233,78 @@ async def get_live_lawyers(state: Optional[str] = None, court: Optional[str] = N
         # Return demo data on error
         return {"lawyers": [], "total": 0, "error": str(e)}
 
-# ============= WALLET ENDPOINTS =============
+# ============= WALLET ENDPOINTS (Firestore) =============
 
 @router.get("/wallet/{user_id}")
 async def get_wallet(user_id: str):
-    """Get user wallet balance"""
-    if not supabase:
-        return {"balance": 500.0, "currency": "INR", "user_id": user_id}
-    
+    """Get user wallet balance from Firestore"""
     try:
-        result = supabase.table('wallets').select('*').eq('user_id', user_id).execute()
-        if result.data:
-            return result.data[0]
-        new_wallet = {"user_id": user_id, "balance": 0.0, "currency": "INR"}
-        supabase.table('wallets').insert(new_wallet).execute()
-        return new_wallet
+        doc = db.collection('wallets').document(user_id).get()
+        if doc.exists:
+            data = doc.to_dict()
+            return {"balance": data.get('balance', 0.0), "currency": "INR", "user_id": user_id}
+        return {"balance": 0.0, "currency": "INR", "user_id": user_id}
     except Exception as e:
+        print(f"Wallet get error: {e}")
         return {"balance": 0.0, "currency": "INR", "user_id": user_id}
 
 @router.post("/wallet/recharge")
 async def recharge_wallet(data: WalletRecharge):
-    """Add funds to wallet (Dummy mode)"""
-    if not supabase:
-        return {"success": True, "new_balance": data.amount, "message": "Dummy recharge successful"}
-    
+    """Add funds to wallet via Firestore"""
     try:
-        result = supabase.table('wallets').select('balance').eq('user_id', data.user_id).execute()
+        doc_ref = db.collection('wallets').document(data.user_id)
+        doc = doc_ref.get()
         
-        if result.data:
-            current_balance = result.data[0]['balance']
-            new_balance = current_balance + data.amount
-            supabase.table('wallets').update({'balance': new_balance}).eq('user_id', data.user_id).execute()
+        if doc.exists:
+            current = doc.to_dict().get('balance', 0.0)
+            new_balance = current + data.amount
         else:
             new_balance = data.amount
-            supabase.table('wallets').insert({
-                'user_id': data.user_id,
-                'balance': new_balance,
-                'currency': 'INR'
-            }).execute()
+        
+        doc_ref.set({
+            'user_id': data.user_id,
+            'balance': new_balance,
+            'currency': 'INR',
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }, merge=True)
+        
+        # Record transaction
+        db.collection('transactions').add({
+            'user_id': data.user_id,
+            'type': 'recharge',
+            'amount': data.amount,
+            'balance_after': new_balance,
+            'created_at': datetime.now(timezone.utc).isoformat()
+        })
         
         return {"success": True, "new_balance": new_balance}
     except Exception as e:
+        print(f"Wallet recharge error: {e}")
         return {"success": False, "error": str(e)}
 
 @router.post("/wallet/deduct")
 async def deduct_from_wallet(user_id: str, amount: float, lawyer_id: str, session_id: str):
-    """Deduct from wallet with 80/20 split"""
+    """Deduct from wallet with 80/20 split - Firestore"""
     lawyer_share = amount * 0.80
     platform_share = amount * 0.20
     
-    if not supabase:
-        return {
-            "success": True,
-            "deducted": amount,
-            "lawyer_share": lawyer_share,
-            "platform_share": platform_share
-        }
-    
     try:
-        result = supabase.table('wallets').select('balance').eq('user_id', user_id).execute()
+        doc_ref = db.collection('wallets').document(user_id)
+        doc = doc_ref.get()
         
-        if not result.data or result.data[0]['balance'] < amount:
+        if not doc.exists or doc.to_dict().get('balance', 0) < amount:
             raise HTTPException(status_code=400, detail="Insufficient balance")
         
-        current_balance = result.data[0]['balance']
+        current_balance = doc.to_dict()['balance']
         new_balance = current_balance - amount
         
-        supabase.table('wallets').update({'balance': new_balance}).eq('user_id', user_id).execute()
+        doc_ref.update({
+            'balance': new_balance,
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        })
         
         # Record billing
-        supabase.table('billing_history').insert({
+        db.collection('billing_history').add({
             'session_id': session_id,
             'client_id': user_id,
             'lawyer_id': lawyer_id,
@@ -314,7 +312,18 @@ async def deduct_from_wallet(user_id: str, amount: float, lawyer_id: str, sessio
             'lawyer_share': lawyer_share,
             'platform_share': platform_share,
             'created_at': datetime.now(timezone.utc).isoformat()
-        }).execute()
+        })
+        
+        # Credit lawyer wallet
+        lawyer_wallet_ref = db.collection('wallets').document(lawyer_id)
+        lawyer_doc = lawyer_wallet_ref.get()
+        lawyer_bal = lawyer_doc.to_dict().get('balance', 0) if lawyer_doc.exists else 0
+        lawyer_wallet_ref.set({
+            'user_id': lawyer_id,
+            'balance': lawyer_bal + lawyer_share,
+            'currency': 'INR',
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }, merge=True)
         
         return {
             "success": True,
@@ -326,7 +335,22 @@ async def deduct_from_wallet(user_id: str, amount: float, lawyer_id: str, sessio
     except HTTPException:
         raise
     except Exception as e:
+        print(f"Wallet deduct error: {e}")
         return {"success": False, "error": str(e)}
+
+@router.get("/billing/history/{user_id}")
+async def get_billing_history(user_id: str):
+    """Get billing history from Firestore"""
+    try:
+        docs = list(db.collection('transactions').where('user_id', '==', user_id).order_by('created_at', direction=firestore.Query.DESCENDING).limit(50).stream())
+        history = []
+        for doc in docs:
+            d = doc.to_dict()
+            history.append(d)
+        return {"history": history}
+    except Exception as e:
+        print(f"Billing history error: {e}")
+        return {"history": []}
 
 # ============= SESSION ENDPOINTS =============
 
@@ -435,33 +459,33 @@ async def verify_razorpay_payment(data: RazorpayVerify):
         }
         razorpay_client.utility.verify_payment_signature(params)
         
-        # Payment verified - credit wallet
-        if supabase:
-            result = supabase.table('wallets').select('balance').eq('user_id', data.user_id).execute()
-            if result.data:
-                current_balance = result.data[0]['balance']
-                new_balance = current_balance + data.amount
-                supabase.table('wallets').update({'balance': new_balance}).eq('user_id', data.user_id).execute()
-            else:
-                new_balance = data.amount
-                supabase.table('wallets').insert({
-                    'user_id': data.user_id,
-                    'balance': new_balance,
-                    'currency': 'INR'
-                }).execute()
-            
-            # Record transaction
-            supabase.table('billing_history').insert({
-                'session_id': f"recharge_{data.razorpay_payment_id}",
-                'client_id': data.user_id,
-                'lawyer_id': 'system',
-                'total_amount': data.amount,
-                'lawyer_share': 0,
-                'platform_share': 0,
-                'created_at': datetime.now(timezone.utc).isoformat()
-            }).execute()
+        # Payment verified - credit wallet in Firestore
+        doc_ref = db.collection('wallets').document(data.user_id)
+        doc = doc_ref.get()
+        
+        if doc.exists:
+            current_balance = doc.to_dict().get('balance', 0.0)
+            new_balance = current_balance + data.amount
         else:
             new_balance = data.amount
+        
+        doc_ref.set({
+            'user_id': data.user_id,
+            'balance': new_balance,
+            'currency': 'INR',
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }, merge=True)
+        
+        # Record transaction
+        db.collection('transactions').add({
+            'user_id': data.user_id,
+            'type': 'recharge',
+            'amount': data.amount,
+            'balance_after': new_balance,
+            'payment_id': data.razorpay_payment_id,
+            'order_id': data.razorpay_order_id,
+            'created_at': datetime.now(timezone.utc).isoformat()
+        })
         
         return {
             "success": True,
@@ -478,44 +502,220 @@ async def verify_razorpay_payment(data: RazorpayVerify):
 
 # ============= FILTERS =============
 
+STATES_AND_UTS = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan",
+    "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+    "Uttarakhand", "West Bengal",
+    "Chandigarh", "Delhi", "Jammu & Kashmir", "Ladakh",
+    "Puducherry", "Andaman & Nicobar", "Dadra & Nagar Haveli", "Lakshadweep"
+]
+
+STATE_COURTS = {
+    "Andhra Pradesh": {
+        "High Court": ["Andhra Pradesh High Court, Amaravati"],
+        "District Courts": ["Visakhapatnam District Court", "Vijayawada District Court", "Guntur District Court", "Tirupati District Court", "Kurnool District Court", "Rajahmundry District Court", "Nellore District Court", "Anantapur District Court", "Kadapa District Court", "Eluru District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Arunachal Pradesh": {
+        "High Court": ["Gauhati High Court, Itanagar Bench"],
+        "District Courts": ["Itanagar District Court", "Naharlagun District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court"]
+    },
+    "Assam": {
+        "High Court": ["Gauhati High Court, Guwahati"],
+        "District Courts": ["Kamrup District Court, Guwahati", "Nagaon District Court", "Dibrugarh District Court", "Jorhat District Court", "Silchar District Court", "Tezpur District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Bihar": {
+        "High Court": ["Patna High Court"],
+        "District Courts": ["Patna District Court", "Gaya District Court", "Muzaffarpur District Court", "Bhagalpur District Court", "Darbhanga District Court", "Purnia District Court", "Arrah District Court", "Begusarai District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Chhattisgarh": {
+        "High Court": ["Chhattisgarh High Court, Bilaspur"],
+        "District Courts": ["Raipur District Court", "Bilaspur District Court", "Durg District Court", "Korba District Court", "Jagdalpur District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Consumer Forum"]
+    },
+    "Chandigarh": {
+        "High Court": ["Punjab & Haryana High Court, Chandigarh"],
+        "District Courts": ["Chandigarh District Court, Sector 43"],
+        "Other Courts": ["Sessions Court, Chandigarh", "Magistrate Court, Chandigarh", "Family Court, Chandigarh", "Consumer Forum, Chandigarh", "Labour Court, Chandigarh"]
+    },
+    "Delhi": {
+        "High Court": ["Delhi High Court"],
+        "District Courts": ["Patiala House Court", "Tis Hazari Court", "Saket Court", "Rohini Court", "Karkardooma Court", "Dwarka Court", "New Delhi District Court"],
+        "Other Courts": ["Sessions Court", "Metropolitan Magistrate Court", "Family Court", "Consumer Forum", "Labour Court", "Motor Accident Claims Tribunal", "Rent Control Tribunal"]
+    },
+    "Goa": {
+        "High Court": ["Bombay High Court, Goa Bench, Panaji"],
+        "District Courts": ["North Goa District Court, Panaji", "South Goa District Court, Margao"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Consumer Forum"]
+    },
+    "Gujarat": {
+        "High Court": ["Gujarat High Court, Ahmedabad"],
+        "District Courts": ["Ahmedabad City Civil Court", "Surat District Court", "Vadodara District Court", "Rajkot District Court", "Bhavnagar District Court", "Jamnagar District Court", "Gandhinagar District Court", "Junagadh District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Haryana": {
+        "High Court": ["Punjab & Haryana High Court, Chandigarh"],
+        "District Courts": ["Gurugram District Court", "Faridabad District Court", "Ambala District Court", "Karnal District Court", "Hisar District Court", "Rohtak District Court", "Panipat District Court", "Sonipat District Court", "Panchkula District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Himachal Pradesh": {
+        "High Court": ["Himachal Pradesh High Court, Shimla"],
+        "District Courts": ["Shimla District Court", "Kangra District Court, Dharamshala", "Mandi District Court", "Kullu District Court", "Solan District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Consumer Forum"]
+    },
+    "Jammu & Kashmir": {
+        "High Court": ["Jammu & Kashmir High Court, Srinagar", "Jammu & Kashmir High Court, Jammu Wing"],
+        "District Courts": ["Srinagar District Court", "Jammu District Court", "Anantnag District Court", "Baramulla District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Consumer Forum"]
+    },
+    "Jharkhand": {
+        "High Court": ["Jharkhand High Court, Ranchi"],
+        "District Courts": ["Ranchi District Court", "Jamshedpur District Court", "Dhanbad District Court", "Bokaro District Court", "Hazaribagh District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Consumer Forum"]
+    },
+    "Karnataka": {
+        "High Court": ["Karnataka High Court, Bengaluru", "Karnataka High Court, Dharwad Bench", "Karnataka High Court, Kalaburagi Bench"],
+        "District Courts": ["Bengaluru City Civil Court", "Mysuru District Court", "Mangaluru District Court", "Hubli District Court", "Belagavi District Court", "Kalaburagi District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Kerala": {
+        "High Court": ["Kerala High Court, Ernakulam"],
+        "District Courts": ["Ernakulam District Court", "Thiruvananthapuram District Court", "Kozhikode District Court", "Thrissur District Court", "Kottayam District Court", "Kollam District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Madhya Pradesh": {
+        "High Court": ["Madhya Pradesh High Court, Jabalpur", "MP High Court, Gwalior Bench", "MP High Court, Indore Bench"],
+        "District Courts": ["Bhopal District Court", "Indore District Court", "Jabalpur District Court", "Gwalior District Court", "Ujjain District Court", "Sagar District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Maharashtra": {
+        "High Court": ["Bombay High Court, Mumbai", "Bombay HC, Aurangabad Bench", "Bombay HC, Nagpur Bench"],
+        "District Courts": ["Mumbai City Civil Court", "Pune District Court", "Nagpur District Court", "Thane District Court", "Nashik District Court", "Aurangabad District Court", "Kolhapur District Court", "Solapur District Court", "Navi Mumbai District Court"],
+        "Other Courts": ["Sessions Court", "Metropolitan Magistrate Court", "Family Court", "Labour Court", "Consumer Forum", "Debt Recovery Tribunal"]
+    },
+    "Manipur": {
+        "High Court": ["Manipur High Court, Imphal"],
+        "District Courts": ["Imphal District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court"]
+    },
+    "Meghalaya": {
+        "High Court": ["Meghalaya High Court, Shillong"],
+        "District Courts": ["Shillong District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court"]
+    },
+    "Mizoram": {
+        "High Court": ["Gauhati High Court, Aizawl Bench"],
+        "District Courts": ["Aizawl District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court"]
+    },
+    "Nagaland": {
+        "High Court": ["Gauhati High Court, Kohima Bench"],
+        "District Courts": ["Kohima District Court", "Dimapur District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court"]
+    },
+    "Odisha": {
+        "High Court": ["Orissa High Court, Cuttack"],
+        "District Courts": ["Bhubaneswar District Court", "Cuttack District Court", "Berhampur District Court", "Sambalpur District Court", "Rourkela District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Punjab": {
+        "High Court": ["Punjab & Haryana High Court, Chandigarh"],
+        "District Courts": ["Ludhiana District Court", "Amritsar District Court", "Jalandhar District Court", "Patiala District Court", "Bathinda District Court", "Mohali District Court", "Pathankot District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Rajasthan": {
+        "High Court": ["Rajasthan High Court, Jodhpur", "Rajasthan HC, Jaipur Bench"],
+        "District Courts": ["Jaipur District Court", "Jodhpur District Court", "Udaipur District Court", "Kota District Court", "Ajmer District Court", "Bikaner District Court", "Alwar District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Sikkim": {
+        "High Court": ["Sikkim High Court, Gangtok"],
+        "District Courts": ["Gangtok District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court"]
+    },
+    "Tamil Nadu": {
+        "High Court": ["Madras High Court, Chennai", "Madras HC, Madurai Bench"],
+        "District Courts": ["Chennai District Court", "Coimbatore District Court", "Madurai District Court", "Tiruchirappalli District Court", "Salem District Court", "Tirunelveli District Court", "Vellore District Court"],
+        "Other Courts": ["Sessions Court", "Metropolitan Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Telangana": {
+        "High Court": ["Telangana High Court, Hyderabad"],
+        "District Courts": ["Hyderabad City Civil Court", "Rangareddy District Court", "Warangal District Court", "Karimnagar District Court", "Nizamabad District Court", "Khammam District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Tripura": {
+        "High Court": ["Tripura High Court, Agartala"],
+        "District Courts": ["Agartala District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court"]
+    },
+    "Uttar Pradesh": {
+        "High Court": ["Allahabad High Court", "Allahabad HC, Lucknow Bench"],
+        "District Courts": ["Lucknow District Court", "Allahabad District Court", "Varanasi District Court", "Kanpur District Court", "Agra District Court", "Meerut District Court", "Ghaziabad District Court", "Noida District Court", "Bareilly District Court", "Gorakhpur District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Labour Court", "Consumer Forum", "Revenue Court"]
+    },
+    "Uttarakhand": {
+        "High Court": ["Uttarakhand High Court, Nainital"],
+        "District Courts": ["Dehradun District Court", "Haridwar District Court", "Nainital District Court", "Haldwani District Court", "Roorkee District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Consumer Forum"]
+    },
+    "West Bengal": {
+        "High Court": ["Calcutta High Court, Kolkata", "Calcutta HC, Jalpaiguri Circuit Bench"],
+        "District Courts": ["Kolkata City Civil Court", "Howrah District Court", "North 24 Parganas District Court", "South 24 Parganas District Court", "Hooghly District Court", "Siliguri District Court", "Asansol District Court"],
+        "Other Courts": ["Sessions Court", "Metropolitan Magistrate Court", "Family Court", "Labour Court", "Consumer Forum"]
+    },
+    "Puducherry": {
+        "High Court": ["Madras High Court (Puducherry jurisdiction)"],
+        "District Courts": ["Puducherry District Court"],
+        "Other Courts": ["Sessions Court", "Magistrate Court"]
+    },
+    "Ladakh": {
+        "High Court": ["Jammu & Kashmir High Court"],
+        "District Courts": ["Leh District Court", "Kargil District Court"],
+        "Other Courts": ["Magistrate Court"]
+    },
+}
+
+# Supreme Court (separate - not state specific)
+NATIONAL_COURTS = ["Supreme Court of India", "National Company Law Tribunal (NCLT)", "National Green Tribunal (NGT)", "Armed Forces Tribunal", "Income Tax Appellate Tribunal", "Customs, Excise & Service Tax Appellate Tribunal"]
+
 @router.get("/filters/states")
 async def get_states():
-    """Get list of Indian states"""
-    states = [
-        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-        "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
-        "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
-        "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan",
-        "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
-        "Uttarakhand", "West Bengal"
-    ]
-    return {"states": states}
+    """Get list of all Indian states and UTs"""
+    return {"states": sorted(STATES_AND_UTS)}
 
 @router.get("/filters/courts/{state}")
 async def get_courts(state: str):
-    """Get courts for a state"""
-    high_courts = {
-        "Delhi": ["Delhi High Court", "Patiala House Court", "Tis Hazari Court", "Saket Court", "Rohini Court"],
-        "Maharashtra": ["Bombay High Court", "Mumbai City Civil Court", "Pune District Court"],
-        "Karnataka": ["Karnataka High Court", "Bangalore City Civil Court"],
-        "Tamil Nadu": ["Madras High Court", "Chennai District Court"],
-        "Gujarat": ["Gujarat High Court", "Ahmedabad City Civil Court"],
-        "Punjab": ["Punjab & Haryana High Court", "Chandigarh District Court"],
-        "West Bengal": ["Calcutta High Court", "Kolkata City Civil Court"],
-        "Uttar Pradesh": ["Allahabad High Court", "Lucknow Bench"],
-        "Rajasthan": ["Rajasthan High Court", "Jaipur District Court"],
-        "Telangana": ["Telangana High Court", "Hyderabad City Civil Court"],
-        "Kerala": ["Kerala High Court", "Ernakulam District Court"],
+    """Get all courts for a specific state - organized by type"""
+    if state == "National":
+        return {"courts": NATIONAL_COURTS, "grouped": {"National Courts": NATIONAL_COURTS}}
+    
+    state_data = STATE_COURTS.get(state)
+    if state_data:
+        all_courts = []
+        for court_type, courts in state_data.items():
+            all_courts.extend(courts)
+        return {"courts": all_courts, "grouped": state_data}
+    
+    # Fallback for states not explicitly listed
+    return {
+        "courts": [
+            f"{state} High Court",
+            f"{state} District Court",
+            "Sessions Court",
+            "Magistrate Court",
+            "Family Court",
+            "Consumer Forum",
+            "Labour Court"
+        ],
+        "grouped": {
+            "High Court": [f"{state} High Court"],
+            "District Courts": [f"{state} District Court"],
+            "Other Courts": ["Sessions Court", "Magistrate Court", "Family Court", "Consumer Forum", "Labour Court"]
+        }
     }
-    
-    default_courts = [
-        f"{state} High Court",
-        f"{state} District Court",
-        "Sessions Court",
-        "Magistrate Court",
-        "Family Court",
-        "Consumer Forum",
-        "Labour Court"
-    ]
-    
-    return {"courts": high_courts.get(state, default_courts)}
