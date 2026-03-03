@@ -61,6 +61,9 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
 - **Removed Business Info from Wallet**: 80%/20%/5min cards removed from Wallet page and ConsultationRoom billing section - internal info hidden from users.
 - **Open Marketplace ClientDashboard**: Clients now see ALL live lawyers (not just assigned one). Any client can click "Consult Now" on any live lawyer. If wallet has minimum balance → goes to consultation. If not → redirects to wallet.
 - **Flow**: Client opens dashboard → sees live lawyers → clicks Consult Now → adds money if needed → connects via video call.
+- **Wallet migrated to Firestore**: Supabase DNS was failing in preview/production. Wallet now uses Firestore for balance, recharge, deductions, transactions.
+- **Rate changed to ₹20/min**: All defaults updated from ₹30 to ₹20 per minute.
+- **State-wise Court Selection**: Courts are now grouped by state (High Court, District Courts, Other Courts). Chandigarh, Delhi, and all 28 states + 8 UTs included with specific courts. National courts (Supreme Court, NCLT, NGT, etc.) available as separate option.
 
 ### Scaffolded (Not Fully Tested)
 - Push Notifications (backend module exists)
