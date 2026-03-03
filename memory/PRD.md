@@ -46,6 +46,16 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
   - Touch-friendly slider with snap scrolling
   - Compact asset recovery grid on mobile
   - Proper footer on small screens
+- **Razorpay LIVE Integration**: Real payment gateway with live keys
+  - `POST /api/live/razorpay/create-order` - Creates real Razorpay orders
+  - `POST /api/live/razorpay/verify` - Verifies payment signature and credits wallet
+  - Frontend Wallet.js uses Razorpay Checkout.js with UPI, Cards, Net Banking
+- **Agora Video Call**: Real SDK integration
+  - `agora-rtc-sdk-ng` installed and integrated in ConsultationRoom.js
+  - Token generation using HMAC-SHA256 with app certificate
+  - Full video call: create/join channel, publish local tracks, subscribe to remote
+  - PiP local video, controls (mute/unmute, video on/off, end call)
+- **Fixed .env**: Corrected concatenated values in frontend .env
 
 ### Scaffolded (Not Fully Tested)
 - Push Notifications (backend module exists)
@@ -85,15 +95,13 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
 
 ## Pending/Known Issues
 - Client signup may have captcha conflicts (Firebase reCAPTCHA + custom captcha)
-- Wallet system is MOCKED (dummy balance)
-- Agora token generation incomplete
-- End-to-end live consultation flow not fully tested
+- Supabase wallet operations may fail in preview environment (DNS restriction) - works in production
+- End-to-end live consultation flow needs user testing with 2 devices
 
 ## Upcoming Tasks
 - [ ] AI Agent for client enquiries
 - [ ] Fix client signup captcha conflict
-- [ ] End-to-end live consultation testing
-- [ ] Real Razorpay integration
+- [ ] End-to-end live consultation testing (2 devices)
 - [ ] PWA offline support enhancement
 
 ## Future/Backlog
