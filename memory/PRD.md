@@ -59,6 +59,8 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
 - **Role-Aware Settings Page**: Client sees only Name/Email/Mobile/Address. Lawyer sees all professional fields (Chamber, Practice Field, Court, Type, Bio).
 - **Backend Auth Fix**: `get_current_user` now checks BOTH `lawyers` AND `clients` Firestore collections - clients can now authenticate properly.
 - **Removed Business Info from Wallet**: 80%/20%/5min cards removed from Wallet page and ConsultationRoom billing section - internal info hidden from users.
+- **Open Marketplace ClientDashboard**: Clients now see ALL live lawyers (not just assigned one). Any client can click "Consult Now" on any live lawyer. If wallet has minimum balance → goes to consultation. If not → redirects to wallet.
+- **Flow**: Client opens dashboard → sees live lawyers → clicks Consult Now → adds money if needed → connects via video call.
 
 ### Scaffolded (Not Fully Tested)
 - Push Notifications (backend module exists)
