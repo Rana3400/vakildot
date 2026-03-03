@@ -56,6 +56,9 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
   - Full video call: create/join channel, publish local tracks, subscribe to remote
   - PiP local video, controls (mute/unmute, video on/off, end call)
 - **Fixed .env**: Corrected concatenated values in frontend .env
+- **Role-Aware Settings Page**: Client sees only Name/Email/Mobile/Address. Lawyer sees all professional fields (Chamber, Practice Field, Court, Type, Bio).
+- **Backend Auth Fix**: `get_current_user` now checks BOTH `lawyers` AND `clients` Firestore collections - clients can now authenticate properly.
+- **Removed Business Info from Wallet**: 80%/20%/5min cards removed from Wallet page and ConsultationRoom billing section - internal info hidden from users.
 
 ### Scaffolded (Not Fully Tested)
 - Push Notifications (backend module exists)
