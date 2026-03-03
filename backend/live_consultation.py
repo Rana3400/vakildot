@@ -1,7 +1,7 @@
 # Live Consultation Module - VakilDot
-# Handles: Wallet, Billing, Agora Tokens, Live Status
+# Handles: Wallet, Billing, Agora Tokens, Live Status, Razorpay
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone
@@ -9,8 +9,11 @@ import os
 import time
 import hashlib
 import hmac
+import struct
+import json
 import firebase_admin
 from firebase_admin import firestore
+import razorpay
 
 router = APIRouter(prefix="/api/live", tags=["Live Consultation"])
 
@@ -26,6 +29,11 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL else None
 # Agora credentials
 AGORA_APP_ID = os.environ.get('AGORA_APP_ID', '')
 AGORA_APP_CERTIFICATE = os.environ.get('AGORA_APP_CERTIFICATE', '')
+
+# Razorpay credentials
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
+razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if RAZORPAY_KEY_ID else None
 
 # Models
 class WalletRecharge(BaseModel):
@@ -337,16 +345,136 @@ async def start_session(data: StartSession):
 
 @router.get("/agora-token")
 async def get_agora_token(channel_name: str, uid: int = 0):
-    """Get Agora credentials"""
-    if not AGORA_APP_ID:
-        return {"error": "Agora not configured"}
+    """Get Agora credentials with RTC token"""
+    if not AGORA_APP_ID or not AGORA_APP_CERTIFICATE:
+        return {"error": "Agora not configured", "app_id": AGORA_APP_ID}
     
-    return {
-        "app_id": AGORA_APP_ID,
-        "channel": channel_name,
-        "uid": uid,
-        "token": None  # Token generation requires agora SDK
-    }
+    try:
+        token = build_agora_token(AGORA_APP_ID, AGORA_APP_CERTIFICATE, channel_name, uid)
+        return {
+            "app_id": AGORA_APP_ID,
+            "channel": channel_name,
+            "uid": uid,
+            "token": token
+        }
+    except Exception as e:
+        print(f"Agora token error: {e}")
+        return {
+            "app_id": AGORA_APP_ID,
+            "channel": channel_name,
+            "uid": uid,
+            "token": None,
+            "error": str(e)
+        }
+
+def build_agora_token(app_id, app_certificate, channel_name, uid, expiry_seconds=3600):
+    """Build Agora RTC token using HMAC"""
+    ts = int(time.time()) + expiry_seconds
+    salt = int(time.time())
+    
+    msg = f"{app_id}{channel_name}{uid}{ts}{salt}"
+    signature = hmac.new(
+        app_certificate.encode('utf-8'),
+        msg.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    
+    return f"006{app_id}{signature}{ts}{salt}{uid}"
+
+# ============= RAZORPAY ENDPOINTS =============
+
+class RazorpayOrder(BaseModel):
+    amount: float
+    user_id: str
+
+class RazorpayVerify(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+    user_id: str
+    amount: float
+
+@router.post("/razorpay/create-order")
+async def create_razorpay_order(data: RazorpayOrder):
+    """Create a Razorpay order for wallet recharge"""
+    if not razorpay_client:
+        raise HTTPException(status_code=500, detail="Razorpay not configured")
+    
+    try:
+        amount_paise = int(data.amount * 100)
+        order = razorpay_client.order.create({
+            "amount": amount_paise,
+            "currency": "INR",
+            "receipt": f"wallet_{data.user_id[:20]}_{int(time.time())}",
+            "payment_capture": 1
+        })
+        
+        return {
+            "success": True,
+            "order_id": order["id"],
+            "amount": amount_paise,
+            "currency": "INR",
+            "key_id": RAZORPAY_KEY_ID
+        }
+    except Exception as e:
+        print(f"Razorpay order error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
+
+@router.post("/razorpay/verify")
+async def verify_razorpay_payment(data: RazorpayVerify):
+    """Verify Razorpay payment and credit wallet"""
+    if not razorpay_client:
+        raise HTTPException(status_code=500, detail="Razorpay not configured")
+    
+    try:
+        # Verify signature
+        params = {
+            'razorpay_order_id': data.razorpay_order_id,
+            'razorpay_payment_id': data.razorpay_payment_id,
+            'razorpay_signature': data.razorpay_signature
+        }
+        razorpay_client.utility.verify_payment_signature(params)
+        
+        # Payment verified - credit wallet
+        if supabase:
+            result = supabase.table('wallets').select('balance').eq('user_id', data.user_id).execute()
+            if result.data:
+                current_balance = result.data[0]['balance']
+                new_balance = current_balance + data.amount
+                supabase.table('wallets').update({'balance': new_balance}).eq('user_id', data.user_id).execute()
+            else:
+                new_balance = data.amount
+                supabase.table('wallets').insert({
+                    'user_id': data.user_id,
+                    'balance': new_balance,
+                    'currency': 'INR'
+                }).execute()
+            
+            # Record transaction
+            supabase.table('billing_history').insert({
+                'session_id': f"recharge_{data.razorpay_payment_id}",
+                'client_id': data.user_id,
+                'lawyer_id': 'system',
+                'total_amount': data.amount,
+                'lawyer_share': 0,
+                'platform_share': 0,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            }).execute()
+        else:
+            new_balance = data.amount
+        
+        return {
+            "success": True,
+            "payment_id": data.razorpay_payment_id,
+            "new_balance": new_balance,
+            "amount_credited": data.amount,
+            "message": "Payment verified and wallet credited"
+        }
+    except razorpay.errors.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Payment verification failed - invalid signature")
+    except Exception as e:
+        print(f"Razorpay verify error: {e}")
+        raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
 
 # ============= FILTERS =============
 

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Wallet, Plus, History, CreditCard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Wallet, Plus, History, CreditCard, ArrowUpRight, ArrowDownRight, IndianRupee, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,11 +10,13 @@ import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const RAZORPAY_KEY = process.env.REACT_APP_RAZORPAY_KEY_ID;
 
 const WalletPage = () => {
   const [balance, setBalance] = useState(0);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
   const [rechargeAmount, setRechargeAmount] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const token = localStorage.getItem('vakildot_token');
@@ -23,6 +25,12 @@ const WalletPage = () => {
   useEffect(() => {
     fetchWallet();
     fetchHistory();
+    // Load Razorpay script
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => { if (document.body.contains(script)) document.body.removeChild(script); };
   }, []);
 
   const fetchWallet = async () => {
@@ -45,58 +53,130 @@ const WalletPage = () => {
     }
   };
 
-  const handleRecharge = async (amount) => {
+  const handleRazorpayPayment = useCallback(async (amount) => {
+    const numAmount = parseFloat(amount);
+    if (!numAmount || numAmount <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+
+    setPaying(true);
     try {
-      const res = await axios.post(`${API}/live/wallet/recharge`, {
-        user_id: user.id,
-        amount: parseFloat(amount)
+      // Step 1: Create Razorpay order on backend
+      const orderRes = await axios.post(`${API}/live/razorpay/create-order`, {
+        amount: numAmount,
+        user_id: user.id
       });
-      if (res.data.success) {
-        toast.success(`₹${amount} added to wallet!`);
-        setBalance(res.data.new_balance);
-        setDialogOpen(false);
-        setRechargeAmount('');
-        fetchHistory();
+
+      if (!orderRes.data.success) {
+        toast.error('Failed to create payment order');
+        setPaying(false);
+        return;
+      }
+
+      // Step 2: Open Razorpay checkout
+      const options = {
+        key: RAZORPAY_KEY,
+        amount: orderRes.data.amount,
+        currency: orderRes.data.currency,
+        name: 'VakilDot',
+        description: `Wallet Recharge - ₹${numAmount}`,
+        order_id: orderRes.data.order_id,
+        handler: async (response) => {
+          // Step 3: Verify payment on backend
+          try {
+            const verifyRes = await axios.post(`${API}/live/razorpay/verify`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              user_id: user.id,
+              amount: numAmount
+            });
+
+            if (verifyRes.data.success) {
+              toast.success(`₹${numAmount} added to wallet!`);
+              setBalance(verifyRes.data.new_balance);
+              setDialogOpen(false);
+              setRechargeAmount('');
+              fetchHistory();
+            }
+          } catch (verifyErr) {
+            toast.error('Payment verification failed. Contact support.');
+          }
+          setPaying(false);
+        },
+        prefill: {
+          name: user.name || '',
+          email: user.email || '',
+          contact: user.mobile || ''
+        },
+        theme: {
+          color: '#0f172a'
+        },
+        modal: {
+          ondismiss: () => {
+            setPaying(false);
+            toast.info('Payment cancelled');
+          }
+        }
+      };
+
+      if (window.Razorpay) {
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', (resp) => {
+          toast.error(`Payment failed: ${resp.error.description}`);
+          setPaying(false);
+        });
+        rzp.open();
+      } else {
+        toast.error('Payment gateway loading... Please try again.');
+        setPaying(false);
       }
     } catch (e) {
-      toast.error('Recharge failed');
+      toast.error('Failed to initiate payment');
+      setPaying(false);
     }
-  };
+  }, [user]);
 
   const quickAmounts = [100, 200, 500, 1000, 2000];
 
   if (loading) return <div className="flex items-center justify-center h-64">Loading wallet...</div>;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div data-testid="wallet-page" className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold">Wallet</h1>
         <p className="text-muted-foreground mt-1">Manage your consultation balance</p>
       </div>
 
       {/* Balance Card */}
-      <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+      <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm opacity-80">Available Balance</p>
+              <p className="text-sm opacity-70">Available Balance</p>
               <p className="text-4xl font-bold font-mono mt-2">₹{balance.toFixed(2)}</p>
-              <p className="text-sm opacity-80 mt-2">
+              <p className="text-sm opacity-70 mt-2">
                 ≈ {Math.floor(balance / 30)} minutes @ ₹30/min
               </p>
             </div>
-            <Wallet className="h-16 w-16 opacity-50" />
+            <div className="h-16 w-16 rounded-2xl bg-amber-500/20 flex items-center justify-center">
+              <IndianRupee className="h-8 w-8 text-amber-400" />
+            </div>
           </div>
           
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="mt-6 bg-white text-primary hover:bg-white/90">
+              <Button data-testid="add-money-btn" className="mt-6 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold">
                 <Plus className="h-4 w-4 mr-2" />Add Money
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Recharge Wallet</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Recharge Wallet
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-2">
@@ -104,8 +184,9 @@ const WalletPage = () => {
                     <Button 
                       key={amt} 
                       variant="outline" 
+                      data-testid={`quick-amount-${amt}`}
                       onClick={() => setRechargeAmount(amt.toString())}
-                      className={rechargeAmount === amt.toString() ? 'border-primary' : ''}
+                      className={rechargeAmount === amt.toString() ? 'border-amber-500 bg-amber-50 dark:bg-amber-950' : ''}
                     >
                       ₹{amt}
                     </Button>
@@ -115,26 +196,30 @@ const WalletPage = () => {
                 <div className="space-y-2">
                   <Label>Custom Amount</Label>
                   <Input 
+                    data-testid="custom-amount-input"
                     type="number" 
                     value={rechargeAmount}
                     onChange={(e) => setRechargeAmount(e.target.value)}
                     placeholder="Enter amount"
+                    min="1"
                   />
                 </div>
 
-                <div className="bg-yellow-50 dark:bg-yellow-950 p-3 rounded-lg">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    <strong>Test Mode:</strong> This is a dummy payment gateway. Click "Pay Now" to add test credits instantly.
+                <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-green-800 dark:text-green-200">
+                    Secured by <strong>Razorpay</strong>. UPI, Cards, Net Banking accepted.
                   </p>
                 </div>
 
                 <Button 
-                  className="w-full" 
-                  onClick={() => handleRecharge(rechargeAmount)}
-                  disabled={!rechargeAmount || parseFloat(rechargeAmount) <= 0}
+                  data-testid="pay-now-btn"
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white" 
+                  onClick={() => handleRazorpayPayment(rechargeAmount)}
+                  disabled={!rechargeAmount || parseFloat(rechargeAmount) <= 0 || paying}
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
-                  Pay ₹{rechargeAmount || '0'} (Test Mode)
+                  {paying ? 'Processing...' : `Pay ₹${rechargeAmount || '0'}`}
                 </Button>
               </div>
             </DialogContent>
