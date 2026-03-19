@@ -54,9 +54,7 @@ const CallHistory = () => {
           lawyer_name: 'Adv. Priya Sharma',
           start_time: new Date().toISOString(),
           duration_minutes: 15,
-          total_amount: 750,
-          lawyer_share: 600,
-          platform_share: 150,
+          total_amount: 300,
           rating: 5,
           recording_status: 'completed',
           chat_message_count: 12
@@ -67,9 +65,7 @@ const CallHistory = () => {
           lawyer_name: 'Adv. Rajesh Kumar',
           start_time: new Date(Date.now() - 86400000).toISOString(),
           duration_minutes: 8,
-          total_amount: 240,
-          lawyer_share: 192,
-          platform_share: 48,
+          total_amount: 160,
           rating: 4,
           recording_status: 'completed',
           chat_message_count: 5
@@ -298,8 +294,8 @@ const CallHistory = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-lg font-bold ${user.user_role === 'lawyer' ? 'text-green-600' : ''}`}>
-                      {user.user_role === 'lawyer' ? `+₹${call.lawyer_share}` : `₹${call.total_amount}`}
+                    <p className="text-lg font-bold">
+                      ₹{call.total_amount}
                     </p>
                     <ChevronRight className="h-5 w-5 text-muted-foreground ml-auto mt-2" />
                   </div>
@@ -381,29 +377,6 @@ const CallHistory = () => {
                       </div>
                     )}
                   </div>
-
-                  {/* Billing Breakdown */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Billing Breakdown</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Total Amount</span>
-                          <span className="font-medium">₹{selectedCall.total_amount}</span>
-                        </div>
-                        <div className="flex justify-between text-green-600">
-                          <span>Lawyer Share (80%)</span>
-                          <span className="font-medium">₹{selectedCall.lawyer_share}</span>
-                        </div>
-                        <div className="flex justify-between text-amber-600">
-                          <span>Platform Fee (20%)</span>
-                          <span className="font-medium">₹{selectedCall.platform_share}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
                 </div>
               </TabsContent>
 

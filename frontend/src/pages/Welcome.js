@@ -418,52 +418,6 @@ const Welcome = () => {
         </div>
       </section>
 
-      {/* SECTION 4: Asset Recovery */}
-      <section className={`py-12 md:py-20 px-4 ${darkMode ? 'bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800' : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'}`}>
-        <div className="max-w-6xl mx-auto">
-          <Badge className="block w-fit mx-auto mb-4 md:mb-6 bg-amber-500/20 text-amber-400 border-amber-500/30 px-3 py-1 text-xs md:text-sm">
-            <Award className="h-3 w-3 md:h-4 md:w-4 mr-1.5 inline" />
-            Specialized Service
-          </Badge>
-          <h2 className="text-2xl md:text-4xl font-bold text-center mb-3 text-white">Asset Recovery Services</h2>
-          <p className="text-center mb-8 md:mb-14 text-slate-300 text-sm md:text-base">Recover your unclaimed assets with expert legal help</p>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
-            {[
-              { icon: Briefcase, title: 'IEPF Shares', desc: 'Recover unclaimed shares & dividends', color: 'from-blue-500 to-blue-600' },
-              { icon: Shield, title: 'Insurance', desc: 'Unclaimed insurance policies', color: 'from-green-500 to-green-600' },
-              { icon: Building, title: 'Bank Deposits', desc: 'Dormant bank accounts', color: 'from-purple-500 to-purple-600' },
-              { icon: Home, title: 'Property', desc: 'Ancestral property claims', color: 'from-orange-500 to-orange-600' }
-            ].map((item, i) => (
-              <Card 
-                key={i} 
-                className="cursor-pointer bg-slate-800/50 border-slate-700 hover:border-amber-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 text-center backdrop-blur-sm"
-                style={{ boxShadow: '0 20px 40px -15px rgba(0,0,0,0.5)' }}
-                onClick={() => navigate('/asset-recovery')}
-              >
-                <CardContent className="pt-6 pb-6 md:pt-10 md:pb-10">
-                  <div className={`h-10 w-10 md:h-16 md:w-16 mx-auto mb-3 md:mb-5 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg`}>
-                    <item.icon className="h-5 w-5 md:h-8 md:w-8 text-white" />
-                  </div>
-                  <h3 className="font-bold text-sm md:text-lg text-white mb-1">{item.title}</h3>
-                  <p className="text-xs md:text-sm text-slate-400 hidden sm:block">{item.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          
-          <div className="text-center mt-8 md:mt-12">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-semibold px-6 md:px-10 h-12 md:h-14 text-sm md:text-base shadow-lg shadow-amber-500/30"
-              onClick={() => navigate('/asset-recovery')}
-            >
-              Check Your Eligibility
-            </Button>
-          </div>
-        </div>
-      </section>
-
       {/* SECTION 5: About */}
       <section id="about" className={`py-12 md:py-20 px-4 ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
         <div className="max-w-4xl mx-auto text-center">

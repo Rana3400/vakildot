@@ -1,0 +1,136 @@
+{
+  "summary": "Iteration 7 testing complete. Backend: 11/11 tests passed (100%). Frontend: 4/5 tests passed. ONE ISSUE: 'Asset Recovery' text still visible in About section on homepage - requirement says it should be HIDDEN. All other features working correctly: Rate=₹20/min, 66/34 split, Withdrawal endpoint, Earnings endpoint, SignIn/RegisterClient both collections.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Welcome.js - About Section",
+        "issue": "'Asset Recovery' text still visible in About section description (line 430). Requirement states 'Asset Recovery section HIDDEN from homepage'",
+        "selector": "#about p",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter7_features.py",
+    "/app/test_reports/pytest/pytest_results_iter7.xml"
+  ],
+  "action_items": [
+    "Remove 'Asset Recovery' text from Welcome.js About section (line 428-432) to fully hide Asset Recovery mentions from homepage"
+  ],
+  "critical_code_review_comments": [
+    "FAIL: Welcome.js line 430 still contains 'our Asset Recovery division specializes in reclaiming unclaimed shares, insurance policies, bank deposits, and ancestral properties'",
+    "PASS: GET /api/live/lawyers/live returns rate_per_minute=20 for all lawyers",
+    "PASS: POST /api/live/wallet/deduct returns lawyer_share=66% (13.2 for ₹20) and platform_share=34% (6.8 for ₹20)",
+    "PASS: POST /api/live/wallet/withdraw creates pending withdrawal, deducts from wallet, minimum ₹100 enforced",
+    "PASS: GET /api/live/wallet/earnings/{lawyer_id} returns total_earned, total_calls, total_withdrawn, current_balance",
+    "PASS: POST /api/auth/signin checks lawyers collection first, then clients collection",
+    "PASS: POST /api/auth/register-client stores user in clients collection with user_role='client'",
+    "PASS: CallHistory.jsx has NO 'Billing Breakdown', 'Lawyer Share', 'Platform Fee', '80%', '20%' text",
+    "PASS: LawyerDashboard.jsx has Withdraw button (data-testid='withdraw-btn') with wallet card",
+    "PASS: SignIn.js and ClientOnboarding.js have resend-otp-button (visible in OTP step 2)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter7_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "80% (4/5 features verified - Asset Recovery text still visible)"
+  },
+  "test_credentials": {
+    "test_users_created": "test_client_iter7_*, test_lawyer_iter7_*, test_withdraw_iter7_*, test_earnings_iter7_* (Firestore test entries)"
+  },
+  "seed_data_creation": "Test wallet entries created in Firestore for recharge/deduct/withdraw testing",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 7 mostly passed. ONE FIX NEEDED: Remove 'Asset Recovery' mention from Welcome.js About section (line 430). All backend endpoints working correctly. CallHistory properly removed billing breakdown. Resend OTP buttons present (appear in step 2 after OTP sent). Rate=₹20/min everywhere.",
+  "features_tested": {
+    "backend_health": {
+      "status": "PASS",
+      "details": ["Backend reachable via /api/live/lawyers/live - returns lawyers list"]
+    },
+    "live_lawyers_rate_20": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/lawyers/live returns rate_per_minute=20",
+        "Lawyer 'Puneet Anand' shows ₹20/min on homepage card"
+      ]
+    },
+    "wallet_deduct_66_34_split": {
+      "status": "PASS",
+      "details": [
+        "POST /api/live/wallet/deduct returns lawyer_share=66%, platform_share=34%",
+        "For ₹20 deduct: lawyer_share=13.2, platform_share=6.8"
+      ]
+    },
+    "wallet_withdraw": {
+      "status": "PASS",
+      "details": [
+        "POST /api/live/wallet/withdraw deducts from wallet",
+        "Creates pending withdrawal record",
+        "Returns new_balance, withdrawal_amount, status='pending'",
+        "Minimum ₹100 enforced (400 error below minimum)"
+      ]
+    },
+    "lawyer_earnings_endpoint": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/wallet/earnings/{lawyer_id} returns breakdown",
+        "Fields: total_earned, total_calls, total_withdrawn, current_balance"
+      ]
+    },
+    "signin_both_collections": {
+      "status": "PASS",
+      "details": [
+        "POST /api/auth/signin checks lawyers collection first",
+        "Then checks clients collection",
+        "Returns success=false for nonexistent user"
+      ]
+    },
+    "register_client_collection": {
+      "status": "PASS",
+      "details": [
+        "POST /api/auth/register-client stores in clients collection",
+        "Returns user with user_role='client'",
+        "Rejects duplicate mobile numbers"
+      ]
+    },
+    "homepage_no_asset_recovery": {
+      "status": "FAIL",
+      "details": [
+        "FAIL: 'Asset Recovery' text found in About section on homepage",
+        "Location: Welcome.js line 430 in About paragraph",
+        "Should be completely hidden per requirements"
+      ]
+    },
+    "call_history_no_billing_breakdown": {
+      "status": "PASS",
+      "details": [
+        "No 'Billing Breakdown' text on CallHistory page",
+        "No 'Lawyer Share' text",
+        "No 'Platform Fee' text",
+        "No '80%' or '20%' percentages"
+      ]
+    },
+    "resend_otp_buttons": {
+      "status": "PASS",
+      "details": [
+        "SignIn.js has data-testid='resend-otp-button' (visible in OTP step 2)",
+        "ClientOnboarding.js has data-testid='resend-otp-button' (visible in step 2)"
+      ]
+    },
+    "lawyer_dashboard_withdraw": {
+      "status": "PASS",
+      "details": [
+        "LawyerDashboard.jsx has Withdraw button (data-testid='withdraw-btn')",
+        "Wallet card shows earnings with withdraw functionality"
+      ]
+    }
+  },
+  "mocked_apis_note": "NONE - All integrations use LIVE credentials: Razorpay live keys, Agora real credentials, Firebase Firestore"
+}

@@ -352,6 +352,89 @@ async def get_billing_history(user_id: str):
         print(f"Billing history error: {e}")
         return {"history": []}
 
+class WithdrawRequest(BaseModel):
+    lawyer_id: str
+    amount: float
+    bank_account: str = ""
+    ifsc: str = ""
+
+@router.post("/wallet/withdraw")
+async def request_withdrawal(data: WithdrawRequest):
+    """Request withdrawal from lawyer wallet to bank account"""
+    try:
+        doc_ref = db.collection('wallets').document(data.lawyer_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists or doc.to_dict().get('balance', 0) < data.amount:
+            raise HTTPException(status_code=400, detail="Insufficient balance")
+        
+        if data.amount < 100:
+            raise HTTPException(status_code=400, detail="Minimum withdrawal amount is ₹100")
+        
+        current = doc.to_dict()['balance']
+        new_balance = current - data.amount
+        
+        doc_ref.update({
+            'balance': new_balance,
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        })
+        
+        # Record withdrawal request
+        db.collection('withdrawals').add({
+            'lawyer_id': data.lawyer_id,
+            'amount': data.amount,
+            'bank_account': data.bank_account,
+            'ifsc': data.ifsc,
+            'status': 'pending',
+            'created_at': datetime.now(timezone.utc).isoformat()
+        })
+        
+        # Record transaction
+        db.collection('transactions').add({
+            'user_id': data.lawyer_id,
+            'type': 'withdrawal',
+            'amount': -data.amount,
+            'balance_after': new_balance,
+            'created_at': datetime.now(timezone.utc).isoformat()
+        })
+        
+        return {
+            "success": True,
+            "new_balance": new_balance,
+            "withdrawal_amount": data.amount,
+            "status": "pending",
+            "message": "Withdrawal request submitted. Funds will be credited within 2-3 business days."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Withdrawal error: {e}")
+        return {"success": False, "error": str(e)}
+
+@router.get("/wallet/earnings/{lawyer_id}")
+async def get_lawyer_earnings(lawyer_id: str):
+    """Get lawyer's total earnings breakdown"""
+    try:
+        docs = list(db.collection('billing_history').where('lawyer_id', '==', lawyer_id).stream())
+        total_earned = sum(d.to_dict().get('lawyer_share', 0) for d in docs)
+        total_calls = len(docs)
+        
+        withdrawal_docs = list(db.collection('withdrawals').where('lawyer_id', '==', lawyer_id).stream())
+        total_withdrawn = sum(d.to_dict().get('amount', 0) for d in withdrawal_docs)
+        
+        wallet_doc = db.collection('wallets').document(lawyer_id).get()
+        balance = wallet_doc.to_dict().get('balance', 0) if wallet_doc.exists else 0
+        
+        return {
+            "total_earned": total_earned,
+            "total_calls": total_calls,
+            "total_withdrawn": total_withdrawn,
+            "current_balance": balance
+        }
+    except Exception as e:
+        return {"total_earned": 0, "total_calls": 0, "total_withdrawn": 0, "current_balance": 0}
+
+
 # ============= SESSION ENDPOINTS =============
 
 @router.post("/session/start")

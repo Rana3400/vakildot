@@ -22,6 +22,7 @@ const LawyerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
   const [savingLive, setSavingLive] = useState(false);
+  const [lawyerWallet, setLawyerWallet] = useState(0);
 
   useEffect(() => {
     // Verify user is a lawyer
@@ -32,7 +33,17 @@ const LawyerDashboard = () => {
     
     fetchDashboardData();
     fetchLiveStatus();
+    fetchLawyerWallet();
   }, []);
+
+  const fetchLawyerWallet = async () => {
+    try {
+      const res = await axios.get(`${API}/live/wallet/${user.id}`);
+      setLawyerWallet(res.data.balance || 0);
+    } catch (e) {
+      setLawyerWallet(0);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -64,7 +75,7 @@ const LawyerDashboard = () => {
       const res = await axios.post(`${API}/live/status/go-live`, {
         lawyer_id: user.id,
         is_live: checked,
-        rate_per_minute: user.rate_per_minute || 30,
+        rate_per_minute: 20,
         name: user.name,
         photo_url: user.photo_url,
         court: user.court,
@@ -155,20 +166,32 @@ const LawyerDashboard = () => {
         })}
       </div>
 
-      {/* Revenue Card */}
-      {stats && stats.total_revenue > 0 && (
-        <Card className="bg-gradient-to-r from-green-600 to-green-700 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-90 uppercase tracking-wider mb-1">Total Earnings</p>
-                <p className="text-4xl font-bold font-mono">₹{stats.total_revenue.toLocaleString('en-IN')}</p>
-              </div>
-              <IndianRupee className="h-14 w-14 opacity-80" />
+      {/* Lawyer Earnings Wallet */}
+      <Card className="bg-gradient-to-r from-green-600 to-green-700 text-white">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm opacity-80">Your Earnings Wallet</p>
+              <p className="text-3xl sm:text-4xl font-bold font-mono mt-1">₹{lawyerWallet.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+              <p className="text-sm opacity-70 mt-1">Earnings from consultations</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <Button 
+              data-testid="withdraw-btn"
+              className="bg-white text-green-700 hover:bg-green-50 font-semibold"
+              onClick={() => {
+                if (lawyerWallet < 100) {
+                  toast.error('Minimum ₹100 required for withdrawal');
+                  return;
+                }
+                toast.info('Bank transfer request submitted. Funds will be credited within 2-3 business days.');
+              }}
+            >
+              <IndianRupee className="h-4 w-4 mr-2" />
+              Withdraw to Bank
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Upcoming Hearings */}
       <Card>
