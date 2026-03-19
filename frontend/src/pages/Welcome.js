@@ -427,8 +427,7 @@ const Welcome = () => {
           <h2 className={`text-2xl md:text-4xl font-bold mb-4 md:mb-6 ${t.text}`}>About VakilDot</h2>
           <p className={`text-sm md:text-lg leading-relaxed ${t.textMuted}`}>
             VakilDot is India's premier Legal-Tech platform connecting clients with verified advocates through instant video consultations. 
-            Our pay-per-minute model ensures fair billing, while our Asset Recovery division specializes in reclaiming unclaimed shares, 
-            insurance policies, bank deposits, and ancestral properties. Trusted by advocates across District Courts, High Courts, 
+            Our pay-per-minute model ensures fair billing with transparent pricing. Trusted by advocates across District Courts, High Courts, 
             and the Supreme Court of India.
           </p>
         </div>

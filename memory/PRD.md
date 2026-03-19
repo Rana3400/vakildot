@@ -71,6 +71,12 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
 - **Resend OTP button** added to SignIn, LawyerOnboarding, ClientOnboarding - with 30s cooldown timer.
 - **OTP expired** shows clear message "OTP expired. Please click Resend OTP."
 - **ClientOnboarding rewritten** - uses backend API `/api/auth/register-client` instead of direct Firestore writes.
+- **Asset Recovery section HIDDEN** from homepage (section removed + About text cleaned).
+- **Billing Breakdown removed** from CallHistory page (no lawyer share/platform fee visible to clients).
+- **Lawyer Earnings Wallet** added to LawyerDashboard with Withdraw to Bank button.
+- **Withdrawal API**: `POST /api/live/wallet/withdraw` - deducts from lawyer wallet, creates pending withdrawal record. Min ₹100.
+- **Earnings API**: `GET /api/live/wallet/earnings/{lawyer_id}` - total earned, total calls, total withdrawn, current balance.
+- **AstroTalk Flow**: During call → per-minute deduct from client → 66% to lawyer wallet → 34% to company. Lawyer can withdraw to bank.
 
 ### Scaffolded (Not Fully Tested)
 - Push Notifications (backend module exists)
