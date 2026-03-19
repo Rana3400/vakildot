@@ -64,6 +64,13 @@ Digital Munshi for Indian Advocates + Live Consultation Marketplace (AstroTalk M
 - **Wallet migrated to Firestore**: Supabase DNS was failing in preview/production. Wallet now uses Firestore for balance, recharge, deductions, transactions.
 - **Rate changed to ₹20/min**: All defaults updated from ₹30 to ₹20 per minute.
 - **State-wise Court Selection**: Courts are now grouped by state (High Court, District Courts, Other Courts). Chandigarh, Delhi, and all 28 states + 8 UTs included with specific courts. National courts (Supreme Court, NCLT, NGT, etc.) available as separate option.
+- **Auth: Signin/Check checks BOTH collections** (lawyers + clients). No more "Login failed" for existing clients.
+- **register-client stores in `clients` collection** (was wrongly storing in `lawyers`).
+- **Profile update writes to correct collection** based on user role.
+- **Revenue split changed: 66% Lawyer / 34% Company** (was 80/20).
+- **Resend OTP button** added to SignIn, LawyerOnboarding, ClientOnboarding - with 30s cooldown timer.
+- **OTP expired** shows clear message "OTP expired. Please click Resend OTP."
+- **ClientOnboarding rewritten** - uses backend API `/api/auth/register-client` instead of direct Firestore writes.
 
 ### Scaffolded (Not Fully Tested)
 - Push Notifications (backend module exists)
