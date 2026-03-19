@@ -1,0 +1,143 @@
+{
+  "summary": "Iteration 6 - All features verified. Backend: 11/11 tests passed (100%). Fixed SignIn.js missing useEffect import. Auth endpoints (signin, check-existing) check both lawyers+clients collections. Register-client stores in clients collection. Wallet deduct returns 66/34 split. Rate=₹20/min confirmed on homepage and backend.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_auth_wallet_iter6.py",
+    "/app/test_reports/pytest/pytest_results_iter6.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fixed: SignIn.js was missing 'useEffect' import causing runtime error - added 'useEffect' to React import",
+    "Backend signin (/api/auth/signin) correctly checks lawyers first, then clients collection",
+    "Backend check-existing (/api/auth/check-existing) checks both collections",
+    "Register-client (/api/auth/register-client) stores user in 'clients' collection with user_role='client'",
+    "Wallet deduct returns lawyer_share=66% (13.2 for ₹20) and platform_share=34% (6.8 for ₹20)",
+    "Live lawyers API returns rate_per_minute=20 for all lawyers",
+    "Wallet.js shows '₹20/min' rate (line 160-161)",
+    "Resend OTP buttons exist in SignIn, LawyerOnboarding, ClientOnboarding (visible after OTP sent)",
+    "No 80%/20% cards on Wallet page - removed as expected"
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/SignIn.js",
+    "/app/backend/tests/test_auth_wallet_iter6.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (All features verified)"
+  },
+  "test_credentials": {
+    "test_users_created": "test_iter6_*, test_deduct_iter6_*, test_lawyer_iter6_* (Firestore test entries)"
+  },
+  "seed_data_creation": "Test wallet entries created in Firestore for recharge/deduct testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All iteration 6 features working: (1) Rate=₹20/min, (2) Wallet split 66/34, (3) signin checks both collections, (4) register-client stores in clients collection, (5) Resend OTP buttons on all onboarding pages (visible in OTP step 2), (6) Better OTP expired messages, (7) ClientOnboarding uses backend API. Fixed SignIn.js useEffect import bug.",
+  "features_tested": {
+    "backend_health": {
+      "status": "PASS",
+      "details": ["Backend reachable via /api/live/lawyers/live"]
+    },
+    "live_lawyers_rate": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/lawyers/live returns lawyers with rate_per_minute=20",
+        "All demo lawyers have rate=20 (not 30)"
+      ]
+    },
+    "wallet_recharge": {
+      "status": "PASS",
+      "details": [
+        "POST /api/live/wallet/recharge credits wallet",
+        "Balance updated correctly in Firestore"
+      ]
+    },
+    "wallet_deduct_split": {
+      "status": "PASS",
+      "details": [
+        "POST /api/live/wallet/deduct returns lawyer_share=66%, platform_share=34%",
+        "For ₹20 deduct: lawyer_share=13.2, platform_share=6.8"
+      ]
+    },
+    "signin_both_collections": {
+      "status": "PASS",
+      "details": [
+        "POST /api/auth/signin checks lawyers collection first, then clients",
+        "Returns 'User not found' for nonexistent mobile",
+        "Requires mobile field (400 error without)"
+      ]
+    },
+    "check_existing_both_collections": {
+      "status": "PASS",
+      "details": [
+        "POST /api/auth/check-existing checks both collections",
+        "Returns exists=false for new numbers"
+      ]
+    },
+    "register_client": {
+      "status": "PASS",
+      "details": [
+        "POST /api/auth/register-client stores user in clients collection",
+        "Returns user with user_role='client'"
+      ]
+    },
+    "profile_update_auth": {
+      "status": "PASS",
+      "details": ["PUT /api/profile requires authentication (401/403)"]
+    },
+    "chandigarh_courts": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/filters/courts/Chandigarh returns grouped courts",
+        "Includes 'High Court', 'District Courts', 'Other Courts' groups",
+        "Chandigarh District Court found in District Courts"
+      ]
+    },
+    "signin_resend_otp": {
+      "status": "PASS",
+      "details": [
+        "SignIn page has resend-otp-button (visible in OTP step)",
+        "Mobile input with CAPTCHA on step 1",
+        "Fixed missing useEffect import"
+      ]
+    },
+    "client_onboarding_resend_otp": {
+      "status": "PASS",
+      "details": [
+        "Client Onboarding (/signup/client) has Resend OTP button in step 2",
+        "Form includes name, mobile, email fields"
+      ]
+    },
+    "lawyer_onboarding_resend_otp": {
+      "status": "PASS",
+      "details": [
+        "Lawyer Onboarding (/signup/lawyer) has Resend OTP button in step 2",
+        "Form includes all required fields"
+      ]
+    },
+    "wallet_page_rate": {
+      "status": "PASS",
+      "details": [
+        "Wallet.js shows '₹20/min' rate calculation",
+        "No 80%/20% business cards on page",
+        "Add Money button and transaction history present"
+      ]
+    },
+    "homepage_rate": {
+      "status": "PASS",
+      "details": [
+        "Homepage shows ₹20/min on live lawyer cards",
+        "Lawyer 'Puneet Anand' displays ₹20/min rate",
+        "1 Lawyer Online Now indicator visible"
+      ]
+    }
+  },
+  "mocked_apis_note": "NONE - All integrations use LIVE credentials: Razorpay live keys, Agora real credentials, Firebase Firestore"
+}

@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Scale, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { sendOTP, verifyOTP, firestore } from '@/firebase';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { sendOTP, verifyOTP } from '@/firebase';
 import SimpleCaptcha from '@/components/SimpleCaptcha';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -20,6 +20,14 @@ const ClientOnboarding = ({ onComplete }) => {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +36,6 @@ const ClientOnboarding = ({ onComplete }) => {
       toast.error('Please verify the captcha first');
       return;
     }
-    
     if (formData.mobile.length !== 10) {
       toast.error('Enter valid 10-digit mobile');
       return;
@@ -40,17 +47,36 @@ const ClientOnboarding = ({ onComplete }) => {
 
     setLoading(true);
     try {
-      // Send OTP with just the 10-digit number (firebase.js will format it)
       const result = await sendOTP(formData.mobile);
       if (result.success) {
         toast.success('OTP sent to your mobile!');
         setStep(2);
+        setResendTimer(30);
       } else {
         toast.error(result.error || 'Failed to send OTP');
       }
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Service Error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0) return;
+    setLoading(true);
+    setOtp('');
+    try {
+      window.confirmationResult = null;
+      const result = await sendOTP(formData.mobile);
+      if (result.success) {
+        toast.success('New OTP sent!');
+        setResendTimer(30);
+      } else {
+        toast.error(result.error || 'Failed to resend OTP');
+      }
+    } catch (error) {
+      toast.error('Failed to resend OTP');
     } finally {
       setLoading(false);
     }
@@ -58,64 +84,47 @@ const ClientOnboarding = ({ onComplete }) => {
 
   const handleVerifyAndRegister = async (e) => {
     e.preventDefault();
-    
     if (otp.length !== 6) {
       toast.error('Enter 6-digit OTP');
       return;
     }
     
     setLoading(true);
-
     try {
       const verifyResult = await verifyOTP(otp);
       if (!verifyResult.success) {
-        toast.error(verifyResult.error || 'Invalid OTP');
+        const errMsg = verifyResult.error || '';
+        if (errMsg.includes('expired') || errMsg.includes('code-expired')) {
+          toast.error('OTP expired. Please click Resend OTP.');
+        } else {
+          toast.error(errMsg || 'Invalid OTP');
+        }
         setLoading(false);
         return;
       }
 
-      const uid = verifyResult.user.uid;
-      
-      // Save to Firestore
-      const userRef = doc(firestore, 'users', uid);
-      await setDoc(userRef, {
+      // Register via backend API (stores in clients collection)
+      const response = await axios.post(`${API}/auth/register-client`, {
         name: formData.name,
         mobile: formData.mobile,
-        email: formData.email || '',
-        user_role: 'client',
-        role: 'client',
-        createdAt: serverTimestamp()
+        email: formData.email || ''
       });
 
-      // Also save to lawyers collection (for unified user management)
-      const lawyerRef = doc(firestore, 'lawyers', uid);
-      await setDoc(lawyerRef, {
-        id: uid,
-        name: formData.name,
-        mobile: formData.mobile,
-        email: formData.email || '',
-        user_role: 'client',
-        role: 'client',
-        createdAt: new Date().toISOString()
-      });
-
-      toast.success('Account Created Successfully!');
-
-      const token = await verifyResult.user.getIdToken();
-      const userData = { 
-        id: uid, 
-        name: formData.name, 
-        mobile: formData.mobile,
-        email: formData.email,
-        user_role: 'client',
-        role: 'client' 
-      };
-      
-      onComplete(token, userData);
-      navigate('/client-dashboard');
+      if (response.data.success) {
+        toast.success('Account Created Successfully!');
+        onComplete(response.data.token, response.data.user);
+        navigate('/client-dashboard');
+      } else {
+        toast.error(response.data.message || 'Registration failed');
+      }
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
+      const detail = error.response?.data?.detail || '';
+      if (detail.includes('already exists')) {
+        toast.error('Account already exists. Please sign in.');
+        setTimeout(() => navigate('/signin'), 2000);
+      } else {
+        toast.error('Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -123,7 +132,6 @@ const ClientOnboarding = ({ onComplete }) => {
 
   return (
     <div className="min-h-screen bg-muted/30 p-4 py-12">
-      {/* Hidden reCAPTCHA container for Firebase */}
       <div id="recaptcha-container"></div>
       
       <div className="max-w-md mx-auto">
@@ -131,90 +139,79 @@ const ClientOnboarding = ({ onComplete }) => {
           <ArrowLeft className="h-4 w-4 mr-2" />Back
         </Button>
 
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Scale className="h-10 w-10 text-primary" />
-            <span className="text-3xl font-bold text-primary">VakilDot</span>
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Scale className="h-7 w-7 text-primary" />
+            <span className="text-2xl font-bold">VakilDot</span>
           </div>
-          <p className="text-muted-foreground text-sm">Client Portal Registration</p>
         </div>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>{step === 1 ? 'Client Sign Up' : 'Verify OTP'}</CardTitle>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle>Join as Client</CardTitle>
             <CardDescription>
-              {step === 1 ? 'Enter your details to track your cases' : 'Enter the code sent to your phone'}
+              {step === 1 ? 'Create your account to connect with lawyers' : 'Verify your mobile number'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {step === 1 ? (
               <form onSubmit={handleFormSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Full Name *</Label>
-                  <Input 
-                    placeholder="Your full name" 
-                    value={formData.name} 
-                    onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                    required 
-                  />
+                <div className="space-y-1">
+                  <Label htmlFor="name">Full Name *</Label>
+                  <Input id="name" placeholder="Enter your name" value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} required />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label>Email (Optional)</Label>
-                  <Input 
-                    type="email"
-                    placeholder="your@email.com" 
-                    value={formData.email} 
-                    onChange={(e) => setFormData({...formData, email: e.target.value})} 
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Mobile Number *</Label>
-                  <div className="flex">
-                    <span className="inline-flex items-center px-3 border border-r-0 rounded-l-md bg-muted text-muted-foreground text-sm">+91</span>
-                    <Input 
-                      className="rounded-l-none" 
-                      placeholder="10-digit number" 
-                      value={formData.mobile} 
-                      onChange={(e) => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '').slice(0, 10)})} 
-                      maxLength={10} 
-                      required 
-                    />
+
+                <div className="space-y-1">
+                  <Label htmlFor="mobile">Mobile Number *</Label>
+                  <div className="flex gap-2 items-center">
+                    <span className="text-sm font-medium text-muted-foreground bg-muted px-3 py-2 rounded-md">+91</span>
+                    <Input id="mobile" type="tel" placeholder="10-digit mobile" value={formData.mobile}
+                      onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                      maxLength={10} required />
                   </div>
                 </div>
 
-                {/* Alphanumeric Captcha at Footer */}
+                <div className="space-y-1">
+                  <Label htmlFor="email">Email (Optional)</Label>
+                  <Input id="email" type="email" placeholder="Your email" value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} />
+                </div>
+
                 <div className="pt-4 border-t mt-4">
                   <Label className="text-sm text-muted-foreground mb-2 block">Security Verification</Label>
                   <SimpleCaptcha onVerify={setCaptchaVerified} />
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading || !captchaVerified}>
-                  {loading ? 'Sending OTP...' : 'Request OTP'}
+                  {loading ? 'Sending OTP...' : 'Sign Up'}
                 </Button>
               </form>
             ) : (
               <form onSubmit={handleVerifyAndRegister} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Enter OTP</Label>
-                  <Input 
-                    placeholder="6-digit code" 
-                    value={otp} 
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} 
-                    maxLength={6} 
-                    required 
-                    autoFocus
-                  />
+                  <Label htmlFor="otp">Enter OTP *</Label>
+                  <Input id="otp" type="text" placeholder="6-digit OTP" value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6} required autoFocus />
                   <p className="text-xs text-muted-foreground">OTP sent to +91 {formData.mobile}</p>
                 </div>
-                
+
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Verifying...' : 'Complete Sign Up'}
+                  {loading ? 'Verifying...' : 'Verify & Create Account'}
                 </Button>
-                
-                <Button type="button" variant="ghost" className="w-full" onClick={() => { setStep(1); setCaptchaVerified(false); }}>
-                  Edit Number
+
+                <Button type="button" variant="outline" className="w-full"
+                  onClick={handleResendOTP}
+                  disabled={resendTimer > 0 || loading}
+                  data-testid="resend-otp-button"
+                >
+                  {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+                </Button>
+
+                <Button type="button" variant="ghost" className="w-full" 
+                  onClick={() => { setStep(1); setCaptchaVerified(false); setResendTimer(0); }}>
+                  Back to Edit Details
                 </Button>
               </form>
             )}

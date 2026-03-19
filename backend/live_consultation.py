@@ -151,7 +151,7 @@ async def get_live_lawyers(state: Optional[str] = None, court: Optional[str] = N
                     "name": lawyer_data.get('name', data.get('name', 'Advocate')),
                     "profile_photo": lawyer_data.get('photo_url') or data.get('photo_url'),
                     "photo_url": lawyer_data.get('photo_url') or data.get('photo_url'),
-                    "rate_per_minute": data.get('rate_per_minute', DEFAULT_RATE),
+                    "rate_per_minute": DEFAULT_RATE,  # Always use platform rate
                     "specialization": lawyer_data.get('practice_field', data.get('specialization', 'Legal')),
                     "state": lawyer_data.get('state', ''),
                     "court": lawyer_data.get('court', data.get('court', '')),
@@ -284,9 +284,9 @@ async def recharge_wallet(data: WalletRecharge):
 
 @router.post("/wallet/deduct")
 async def deduct_from_wallet(user_id: str, amount: float, lawyer_id: str, session_id: str):
-    """Deduct from wallet with 80/20 split - Firestore"""
-    lawyer_share = amount * 0.80
-    platform_share = amount * 0.20
+    """Deduct from wallet with 66/34 split - Firestore"""
+    lawyer_share = round(amount * 0.66, 2)
+    platform_share = round(amount * 0.34, 2)
     
     try:
         doc_ref = db.collection('wallets').document(user_id)

@@ -137,6 +137,8 @@ async def check_existing(data: dict):
     if not mobile:
         raise HTTPException(status_code=400, detail="Mobile required")
     docs = list(db.collection('lawyers').where('mobile', '==', mobile).limit(1).stream())
+    if len(docs) == 0:
+        docs = list(db.collection('clients').where('mobile', '==', mobile).limit(1).stream())
     return {"exists": len(docs) > 0}
 
 @api_router.post("/auth/register")
@@ -156,7 +158,11 @@ async def signin(data: dict):
     mobile = data.get('mobile')
     if not mobile:
         raise HTTPException(status_code=400, detail="Mobile required")
+    # Check lawyers collection first
     docs = list(db.collection('lawyers').where('mobile', '==', mobile).limit(1).stream())
+    if len(docs) == 0:
+        # Check clients collection
+        docs = list(db.collection('clients').where('mobile', '==', mobile).limit(1).stream())
     if len(docs) == 0:
         return {"success": False, "message": "User not found"}
     user = docs[0].to_dict()
@@ -167,13 +173,16 @@ async def signin(data: dict):
 async def register_client(data: dict):
     mobile = data.get('mobile')
     name = data.get('name')
+    # Check both collections
     docs = list(db.collection('lawyers').where('mobile', '==', mobile).limit(1).stream())
+    if len(docs) == 0:
+        docs = list(db.collection('clients').where('mobile', '==', mobile).limit(1).stream())
     if len(docs) > 0:
         raise HTTPException(status_code=400, detail="User already exists")
     
     user_id = str(uuid.uuid4())
     user_dict = {"id": user_id, "mobile": mobile, "name": name, "user_role": "client", "created_at": datetime.now(timezone.utc).isoformat()}
-    db.collection('lawyers').document(user_id).set(user_dict)
+    db.collection('clients').document(user_id).set(user_dict)
     return {"success": True, "token": create_token(user_id), "user": user_dict}
 
 # Profile
@@ -183,10 +192,12 @@ async def get_profile(user=Depends(get_current_user)):
 
 @api_router.put("/profile")
 async def update_profile(data: dict, user=Depends(get_current_user)):
-    allowed = ['name', 'email', 'practice_field', 'court', 'lawyer_type', 'chamber_number', 'address', 'bio', 'photo_url']
+    allowed = ['name', 'email', 'practice_field', 'court', 'state', 'lawyer_type', 'chamber_number', 'address', 'bio', 'photo_url']
     update_data = {k: v for k, v in data.items() if k in allowed}
     update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
-    db.collection('lawyers').document(user['id']).update(update_data)
+    # Update in correct collection based on role
+    collection_name = 'clients' if user.get('user_role') == 'client' else 'lawyers'
+    db.collection(collection_name).document(user['id']).update(update_data)
     return {"success": True}
 
 @api_router.post("/profile/upload-photo")

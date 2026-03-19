@@ -33,10 +33,18 @@ const LawyerOnboarding = ({ onComplete }) => {
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [states, setStates] = useState([]);
   const [courtGroups, setCourtGroups] = useState({});
+  const [resendTimer, setResendTimer] = useState(0);
 
   useEffect(() => {
     axios.get(`${API}/live/filters/states`).then(res => setStates(res.data.states || [])).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
   const handleStateChange = async (state) => {
     setFormData(prev => ({ ...prev, state, court: '' }));
@@ -87,6 +95,7 @@ const LawyerOnboarding = ({ onComplete }) => {
       if (result.success) {
         toast.success('OTP sent to your mobile number!');
         setStep(2);
+        setResendTimer(30);
       } else {
         toast.error(result.error || 'Failed to send OTP');
       }
@@ -108,7 +117,12 @@ const LawyerOnboarding = ({ onComplete }) => {
     try {
       const verifyResult = await verifyOTP(otp);
       if (!verifyResult.success) {
-        toast.error(verifyResult.error || 'Invalid OTP');
+        const errMsg = verifyResult.error || '';
+        if (errMsg.includes('expired') || errMsg.includes('code-expired')) {
+          toast.error('OTP expired. Please click Resend OTP.');
+        } else {
+          toast.error(errMsg || 'Invalid OTP');
+        }
         setLoading(false);
         return;
       }
@@ -265,7 +279,24 @@ const LawyerOnboarding = ({ onComplete }) => {
                   {loading ? 'Verifying...' : 'Verify & Complete Registration'}
                 </Button>
 
-                <Button type="button" variant="ghost" className="w-full" onClick={() => { setStep(1); setCaptchaVerified(false); }}>
+                <Button type="button" variant="outline" className="w-full" 
+                  onClick={async () => {
+                    if (resendTimer > 0) return;
+                    setOtp('');
+                    setLoading(true);
+                    window.confirmationResult = null;
+                    const result = await sendOTP(formData.mobile);
+                    if (result.success) { toast.success('New OTP sent!'); setResendTimer(30); }
+                    else { toast.error(result.error || 'Failed to resend OTP'); }
+                    setLoading(false);
+                  }}
+                  disabled={resendTimer > 0 || loading}
+                  data-testid="resend-otp-button"
+                >
+                  {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+                </Button>
+
+                <Button type="button" variant="ghost" className="w-full" onClick={() => { setStep(1); setCaptchaVerified(false); setResendTimer(0); }}>
                   Back to Edit Details
                 </Button>
               </form>

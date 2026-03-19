@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Scale, ArrowLeft } from 'lucide-react';
@@ -19,7 +19,15 @@ const SignIn = ({ onLogin }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
@@ -40,12 +48,34 @@ const SignIn = ({ onLogin }) => {
       if (result.success) {
         toast.success('OTP sent to your mobile number!');
         setOtpSent(true);
+        setResendTimer(30);
       } else {
         toast.error(result.error || 'Failed to send OTP');
       }
     } catch (error) {
       toast.error('Failed to send OTP');
       console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0) return;
+    setLoading(true);
+    setOtp('');
+    try {
+      // Reset recaptcha for resend
+      window.confirmationResult = null;
+      const result = await sendOTP(mobile);
+      if (result.success) {
+        toast.success('New OTP sent!');
+        setResendTimer(30);
+      } else {
+        toast.error(result.error || 'Failed to resend OTP');
+      }
+    } catch (error) {
+      toast.error('Failed to resend OTP');
     } finally {
       setLoading(false);
     }
@@ -62,7 +92,14 @@ const SignIn = ({ onLogin }) => {
     try {
       const verifyResult = await verifyOTP(otp);
       if (!verifyResult.success) {
-        toast.error(verifyResult.error || 'Invalid OTP');
+        const errMsg = verifyResult.error || '';
+        if (errMsg.includes('expired') || errMsg.includes('code-expired')) {
+          toast.error('OTP expired. Please click Resend OTP.');
+        } else if (errMsg.includes('invalid') || errMsg.includes('code')) {
+          toast.error('Invalid OTP. Please check and try again.');
+        } else {
+          toast.error(errMsg || 'OTP verification failed');
+        }
         setLoading(false);
         return;
       }
@@ -77,9 +114,15 @@ const SignIn = ({ onLogin }) => {
 
       onLogin(response.data.token, response.data.user);
       toast.success(`Welcome back, ${response.data.user.name}!`);
-      navigate('/dashboard');
+      const role = response.data.user.user_role;
+      navigate(role === 'client' ? '/client-dashboard' : '/lawyer-dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Login failed. Please try again.');
+      const errDetail = error.response?.data?.detail || error.message || '';
+      if (errDetail.includes('expired')) {
+        toast.error('OTP expired. Please click Resend OTP.');
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -173,12 +216,23 @@ const SignIn = ({ onLogin }) => {
                 </Button>
                 <Button 
                   type="button" 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={handleResendOTP}
+                  disabled={resendTimer > 0 || loading}
+                  data-testid="resend-otp-button"
+                >
+                  {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+                </Button>
+                <Button 
+                  type="button" 
                   variant="ghost" 
                   className="w-full" 
                   onClick={() => {
                     setOtpSent(false);
                     setOtp('');
                     setCaptchaVerified(false);
+                    setResendTimer(0);
                   }}
                   data-testid="change-signin-number-button"
                 >
