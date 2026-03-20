@@ -95,7 +95,7 @@ const SignIn = ({ onLogin }) => {
         const errMsg = verifyResult.error || '';
         if (errMsg.includes('expired') || errMsg.includes('code-expired')) {
           toast.error('OTP expired. Please click Resend OTP.');
-        } else if (errMsg.includes('invalid') || errMsg.includes('code')) {
+        } else if (errMsg.includes('invalid') || errMsg.includes('code') || errMsg.includes('Wrong')) {
           toast.error('Invalid OTP. Please check and try again.');
         } else {
           toast.error(errMsg || 'OTP verification failed');
@@ -104,7 +104,9 @@ const SignIn = ({ onLogin }) => {
         return;
       }
 
+      console.log('[SignIn] OTP verified, calling signin API for mobile:', mobile);
       const response = await axios.post(`${API}/auth/signin`, { mobile });
+      console.log('[SignIn] API response:', response.data);
       
       if (!response.data.success) {
         toast.error('Account not found. Please sign up first.');
@@ -114,16 +116,16 @@ const SignIn = ({ onLogin }) => {
 
       onLogin(response.data.token, response.data.user);
       toast.success(`Welcome back, ${response.data.user.name}!`);
-      const role = response.data.user.user_role;
+      const role = response.data.user.user_role || response.data.user.role;
       navigate(role === 'client' ? '/client-dashboard' : '/lawyer-dashboard');
     } catch (error) {
+      console.error('[SignIn] Error:', error);
       const errDetail = error.response?.data?.detail || error.message || '';
       if (errDetail.includes('expired')) {
         toast.error('OTP expired. Please click Resend OTP.');
       } else {
         toast.error('Login failed. Please try again.');
       }
-      console.error(error);
     } finally {
       setLoading(false);
     }

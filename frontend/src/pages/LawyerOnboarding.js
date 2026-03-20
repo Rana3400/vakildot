@@ -36,7 +36,13 @@ const LawyerOnboarding = ({ onComplete }) => {
   const [resendTimer, setResendTimer] = useState(0);
 
   useEffect(() => {
-    axios.get(`${API}/live/filters/states`).then(res => setStates(res.data.states || [])).catch(() => {});
+    axios.get(`${API}/live/filters/states`)
+      .then(res => {
+        const stateList = res.data.states || [];
+        console.log('[LawyerOnboarding] Fetched states:', stateList.length);
+        setStates(stateList);
+      })
+      .catch(e => console.error('[LawyerOnboarding] Failed to fetch states:', e.message));
   }, []);
 
   useEffect(() => {
@@ -50,8 +56,10 @@ const LawyerOnboarding = ({ onComplete }) => {
     setFormData(prev => ({ ...prev, state, court: '' }));
     try {
       const res = await axios.get(`${API}/live/filters/courts/${encodeURIComponent(state)}`);
+      console.log('[LawyerOnboarding] Fetched courts for', state, ':', Object.keys(res.data.grouped || {}));
       setCourtGroups(res.data.grouped || {});
-    } catch {
+    } catch (e) {
+      console.error('[LawyerOnboarding] Failed to fetch courts:', e.message);
       setCourtGroups({});
     }
   };
@@ -138,6 +146,7 @@ const LawyerOnboarding = ({ onComplete }) => {
 
       await saveUserToFirestore(firebaseUser.uid, {
         name: formData.name, email: formData.email, phone: formData.mobile,
+        mobile: formData.mobile,
         practice_field: formData.practice_field, court: formData.court,
         lawyer_type: formData.lawyer_type, chamber_number: formData.chamber_number
       }, 'lawyer');

@@ -14,7 +14,7 @@ import uuid
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL')
 if not BASE_URL:
-    BASE_URL = "https://vakil-live.preview.emergentagent.com"
+    BASE_URL = "https://vakil-live-1.preview.emergentagent.com"
 BASE_URL = BASE_URL.rstrip('/')
 
 class TestWalletFirestore:

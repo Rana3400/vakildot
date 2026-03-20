@@ -105,10 +105,19 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
                 raise HTTPException(status_code=401, detail="User not found")
         user_data = user_doc.to_dict()
         user_data['id'] = user_id
+        # Ensure user_role is set
+        if not user_data.get('user_role'):
+            user_data['user_role'] = user_data.get('role', 'lawyer')
+        # Ensure mobile field exists  
+        if not user_data.get('mobile') and user_data.get('phone'):
+            user_data['mobile'] = user_data['phone']
         return user_data
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except:
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Auth error: {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
 
 async def send_webhook(payload: dict):
@@ -136,20 +145,28 @@ async def check_existing(data: dict):
     mobile = data.get('mobile')
     if not mobile:
         raise HTTPException(status_code=400, detail="Mobile required")
-    docs = list(db.collection('lawyers').where('mobile', '==', mobile).limit(1).stream())
-    if len(docs) == 0:
-        docs = list(db.collection('clients').where('mobile', '==', mobile).limit(1).stream())
-    return {"exists": len(docs) > 0}
+    # Check both 'mobile' and 'phone' fields across both collections
+    for collection_name in ['lawyers', 'clients']:
+        for field_name in ['mobile', 'phone']:
+            try:
+                docs = list(db.collection(collection_name).where(field_name, '==', mobile).limit(1).stream())
+                if docs:
+                    return {"exists": True}
+            except Exception:
+                pass
+    return {"exists": False}
 
 @api_router.post("/auth/register")
 async def register(data: LawyerRegister):
-    docs = list(db.collection('lawyers').where('mobile', '==', data.mobile).limit(1).stream())
-    if len(docs) > 0:
-        raise HTTPException(status_code=400, detail="User already exists")
+    # Check both 'mobile' and 'phone' fields
+    for field_name in ['mobile', 'phone']:
+        docs = list(db.collection('lawyers').where(field_name, '==', data.mobile).limit(1).stream())
+        if len(docs) > 0:
+            raise HTTPException(status_code=400, detail="User already exists")
     
     user_id = str(uuid.uuid4())
     user_dict = data.model_dump()
-    user_dict.update({"id": user_id, "user_role": "lawyer", "created_at": datetime.now(timezone.utc).isoformat()})
+    user_dict.update({"id": user_id, "user_role": "lawyer", "phone": data.mobile, "created_at": datetime.now(timezone.utc).isoformat()})
     db.collection('lawyers').document(user_id).set(user_dict)
     return {"success": True, "token": create_token(user_id), "user": user_dict}
 
@@ -158,30 +175,45 @@ async def signin(data: dict):
     mobile = data.get('mobile')
     if not mobile:
         raise HTTPException(status_code=400, detail="Mobile required")
-    # Check lawyers collection first
-    docs = list(db.collection('lawyers').where('mobile', '==', mobile).limit(1).stream())
-    if len(docs) == 0:
-        # Check clients collection
-        docs = list(db.collection('clients').where('mobile', '==', mobile).limit(1).stream())
-    if len(docs) == 0:
-        return {"success": False, "message": "User not found"}
-    user = docs[0].to_dict()
-    user['id'] = docs[0].id
-    return {"success": True, "token": create_token(user['id']), "user": user}
+    
+    logger.info(f"[SIGNIN] Attempting signin for mobile: {mobile}")
+    
+    # Search strategy: check both 'mobile' and 'phone' fields across lawyers and clients
+    for collection_name in ['lawyers', 'clients']:
+        for field_name in ['mobile', 'phone']:
+            try:
+                docs = list(db.collection(collection_name).where(field_name, '==', mobile).limit(1).stream())
+                if docs:
+                    user = docs[0].to_dict()
+                    user['id'] = docs[0].id
+                    # Ensure user_role is set
+                    if not user.get('user_role'):
+                        user['user_role'] = 'client' if collection_name == 'clients' else 'lawyer'
+                    # Ensure mobile field exists for future lookups
+                    if not user.get('mobile') and user.get('phone'):
+                        user['mobile'] = user['phone']
+                        db.collection(collection_name).document(docs[0].id).update({'mobile': mobile})
+                    logger.info(f"[SIGNIN] Found user in {collection_name}/{field_name}: {user.get('name', 'unknown')}")
+                    return {"success": True, "token": create_token(user['id']), "user": user}
+            except Exception as e:
+                logger.warning(f"[SIGNIN] Error searching {collection_name}/{field_name}: {e}")
+    
+    logger.warning(f"[SIGNIN] User not found for mobile: {mobile}")
+    return {"success": False, "message": "User not found"}
 
 @api_router.post("/auth/register-client")
 async def register_client(data: dict):
     mobile = data.get('mobile')
     name = data.get('name')
-    # Check both collections
-    docs = list(db.collection('lawyers').where('mobile', '==', mobile).limit(1).stream())
-    if len(docs) == 0:
-        docs = list(db.collection('clients').where('mobile', '==', mobile).limit(1).stream())
-    if len(docs) > 0:
-        raise HTTPException(status_code=400, detail="User already exists")
+    # Check both 'mobile' and 'phone' fields across both collections
+    for collection_name in ['lawyers', 'clients']:
+        for field_name in ['mobile', 'phone']:
+            docs = list(db.collection(collection_name).where(field_name, '==', mobile).limit(1).stream())
+            if len(docs) > 0:
+                raise HTTPException(status_code=400, detail="User already exists")
     
     user_id = str(uuid.uuid4())
-    user_dict = {"id": user_id, "mobile": mobile, "name": name, "user_role": "client", "created_at": datetime.now(timezone.utc).isoformat()}
+    user_dict = {"id": user_id, "mobile": mobile, "phone": mobile, "name": name, "user_role": "client", "created_at": datetime.now(timezone.utc).isoformat()}
     db.collection('clients').document(user_id).set(user_dict)
     return {"success": True, "token": create_token(user_id), "user": user_dict}
 

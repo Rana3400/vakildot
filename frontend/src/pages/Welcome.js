@@ -42,15 +42,19 @@ const Welcome = () => {
   const fetchStates = async () => {
     try {
       const res = await axios.get(`${API}/live/filters/states`);
-      setStates(res.data.states);
-    } catch (e) {}
+      setStates(res.data.states || []);
+    } catch (e) {
+      console.error('[Welcome] Failed to fetch states:', e.message);
+    }
   };
 
   const fetchCourts = async (state) => {
     try {
-      const res = await axios.get(`${API}/live/filters/courts/${state}`);
-      setCourts(res.data.courts);
-    } catch (e) {}
+      const res = await axios.get(`${API}/live/filters/courts/${encodeURIComponent(state)}`);
+      setCourts(res.data.courts || []);
+    } catch (e) {
+      console.error('[Welcome] Failed to fetch courts:', e.message);
+    }
   };
 
   const fetchLiveLawyers = async () => {
@@ -61,8 +65,10 @@ const Welcome = () => {
       if (selectedCourt) params.append('court', selectedCourt);
       if (params.toString()) url += `?${params.toString()}`;
       const res = await axios.get(url);
-      setLawyers(res.data.lawyers);
-    } catch (e) {}
+      setLawyers(res.data.lawyers || []);
+    } catch (e) {
+      console.error('[Welcome] Failed to fetch live lawyers:', e.message);
+    }
   };
 
   const scrollContainer = (direction) => {

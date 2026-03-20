@@ -7,7 +7,7 @@ import requests
 import os
 
 # Use external URL for testing
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://vakil-live.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://vakil-live-1.preview.emergentagent.com')
 
 
 class TestHealthEndpoint:
