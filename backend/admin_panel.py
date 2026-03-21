@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/admin", tags=["Admin Panel"])
 
 db = firestore.client()
 security = HTTPBearer()
-JWT_SECRET = os.environ.get('JWT_SECRET', 'vakildot-secret-key-2024')
+JWT_SECRET = os.environ.get('JWT_SECRET', 'vakildot-secret-key-2025')
 ADMIN_EMAILS = os.environ.get('ADMIN_EMAILS', 'admin@vakildot.com').split(',')
 
 # Models

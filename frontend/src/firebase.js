@@ -12,7 +12,7 @@ import {
 
 const firebaseConfig = {
   apiKey: "AIzaSyCP_CM8lmBY_X42AyrpbJ8IX29cX0U6sDE",
-  authDomain: "vakildot.com", 
+  authDomain: "vakil-app-auth.firebaseapp.com", 
   projectId: "vakil-app-auth",
   storageBucket: "vakil-app-auth.firebasestorage.app",
   messagingSenderId: "792778219182",
