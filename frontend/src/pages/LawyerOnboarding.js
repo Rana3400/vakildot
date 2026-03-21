@@ -294,7 +294,7 @@ const LawyerOnboarding = ({ onComplete }) => {
                     setOtp('');
                     setLoading(true);
                     window.confirmationResult = null;
-                    const result = await sendOTP(formData.mobile);
+                    const result = await sendOTP(formData.mobile, true); // true = isResend
                     if (result.success) { toast.success('New OTP sent!'); setResendTimer(30); }
                     else { toast.error(result.error || 'Failed to resend OTP'); }
                     setLoading(false);

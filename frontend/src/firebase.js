@@ -25,97 +25,129 @@ export const firestore = getFirestore(app);
 
 console.log('Firebase Initialized for VakilDot');
 
-// INVISIBLE reCAPTCHA - doesn't interfere with custom captcha
-export const setupRecaptcha = (containerId) => {
+// Robust reCAPTCHA management - create once, reuse
+const getOrCreateRecaptcha = async (containerId) => {
+  // If we already have a working verifier, reuse it
   if (window.recaptchaVerifier) {
     try {
-      window.recaptchaVerifier.clear();
-      window.recaptchaVerifier = null;
+      // Test if it's still valid by checking its type
+      if (window.recaptchaVerifier.type === 'recaptcha') {
+        return window.recaptchaVerifier;
+      }
     } catch (e) {
-      window.recaptchaVerifier = null;
+      // Verifier is broken, will recreate below
+      console.log('[Firebase] Existing reCAPTCHA invalid, recreating...');
     }
   }
-  
+
+  // Clean up old verifier if exists
+  if (window.recaptchaVerifier) {
+    try { window.recaptchaVerifier.clear(); } catch (e) {}
+    window.recaptchaVerifier = null;
+  }
+
   const container = document.getElementById(containerId);
   if (!container) {
-    console.error(`Container '${containerId}' not found`);
+    console.error(`[Firebase] Container '${containerId}' not found`);
     return null;
   }
-  
   container.innerHTML = '';
-  
+
   try {
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-      size: 'invisible', // INVISIBLE - won't show on screen
-      callback: (response) => {
-        console.log('reCAPTCHA solved');
-      },
+    const verifier = new RecaptchaVerifier(auth, containerId, {
+      size: 'invisible',
+      callback: () => { console.log('[Firebase] reCAPTCHA solved'); },
       'expired-callback': () => {
-        console.log('reCAPTCHA expired');
+        console.log('[Firebase] reCAPTCHA expired, will recreate on next use');
+        try { window.recaptchaVerifier.clear(); } catch (e) {}
         window.recaptchaVerifier = null;
       }
     });
-    
-    return window.recaptchaVerifier;
+
+    // Pre-render to ensure it's ready
+    await verifier.render();
+    window.recaptchaVerifier = verifier;
+    console.log('[Firebase] reCAPTCHA created and rendered');
+    return verifier;
   } catch (error) {
-    console.error('RecaptchaVerifier error:', error);
+    console.error('[Firebase] RecaptchaVerifier error:', error);
+    window.recaptchaVerifier = null;
     return null;
   }
 };
 
-// Send OTP - with proper phone formatting
-export const sendOTP = async (phoneNumber) => {
+// Force-create a fresh reCAPTCHA (used after failures)
+const forceNewRecaptcha = async (containerId) => {
+  if (window.recaptchaVerifier) {
+    try { window.recaptchaVerifier.clear(); } catch (e) {}
+    window.recaptchaVerifier = null;
+  }
+  
+  const container = document.getElementById(containerId);
+  if (container) container.innerHTML = '';
+
+  // Small delay to let DOM settle
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  return getOrCreateRecaptcha(containerId);
+};
+
+// Send OTP with robust retry
+export const sendOTP = async (phoneNumber, isResend = false) => {
   try {
-    window.confirmationResult = null;
-    
-    // Clean phone number - remove any non-digit characters except +
+    // Clean phone number
     let cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
-    
-    // Ensure +91 prefix for Indian numbers
     if (!cleanPhone.startsWith('+')) {
       if (cleanPhone.startsWith('91') && cleanPhone.length === 12) {
         cleanPhone = '+' + cleanPhone;
-      } else if (cleanPhone.length === 10) {
-        cleanPhone = '+91' + cleanPhone;
       } else {
         cleanPhone = '+91' + cleanPhone;
       }
     }
-    
-    console.log('Sending OTP to:', cleanPhone);
-    
-    const appVerifier = setupRecaptcha('recaptcha-container');
-    if (!appVerifier) {
-      return { success: false, error: 'reCAPTCHA failed. Please refresh page.' };
+
+    console.log(`[Firebase] ${isResend ? 'Resending' : 'Sending'} OTP to:`, cleanPhone);
+
+    // For resend, force create a fresh reCAPTCHA (old one is used up)
+    let appVerifier;
+    if (isResend) {
+      appVerifier = await forceNewRecaptcha('recaptcha-container');
+    } else {
+      appVerifier = await getOrCreateRecaptcha('recaptcha-container');
     }
-    
-    // Wait for reCAPTCHA
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
+
+    if (!appVerifier) {
+      return { success: false, error: 'Security check failed. Please refresh the page and try again.' };
+    }
+
     const confirmationResult = await signInWithPhoneNumber(auth, cleanPhone, appVerifier);
     window.confirmationResult = confirmationResult;
-    
-    console.log('OTP sent successfully');
+
+    console.log('[Firebase] OTP sent successfully');
     return { success: true };
   } catch (error) {
-    console.error('OTP Error:', error.code, error.message);
-    
+    console.error('[Firebase] OTP Error:', error.code, error.message);
+
+    // Clean up reCAPTCHA on error so it gets recreated fresh next time
     if (window.recaptchaVerifier) {
       try { window.recaptchaVerifier.clear(); } catch (e) {}
       window.recaptchaVerifier = null;
     }
-    
+
     let errorMessage = 'Failed to send OTP. Please try again.';
     if (error.code === 'auth/invalid-phone-number') {
-      errorMessage = 'Invalid phone number.';
+      errorMessage = 'Invalid phone number format.';
     } else if (error.code === 'auth/too-many-requests') {
-      errorMessage = 'Too many attempts. Try later.';
+      errorMessage = 'Too many OTP requests. Please wait a few minutes and try again.';
     } else if (error.code === 'auth/captcha-check-failed') {
-      errorMessage = 'Security check failed. Refresh page.';
+      errorMessage = 'Security verification failed. Please refresh the page.';
     } else if (error.code === 'auth/quota-exceeded') {
-      errorMessage = 'SMS quota exceeded. Try later.';
+      errorMessage = 'SMS service limit reached. Please try again later.';
+    } else if (error.code === 'auth/network-request-failed') {
+      errorMessage = 'Network error. Please check your internet connection.';
+    } else if (error.code === 'auth/internal-error') {
+      errorMessage = 'Service error. Please refresh the page and try again.';
     }
-    
+
     return { success: false, error: errorMessage };
   }
 };
@@ -123,27 +155,25 @@ export const sendOTP = async (phoneNumber) => {
 export const verifyOTP = async (code) => {
   try {
     if (!window.confirmationResult) {
-      return { success: false, error: 'Please request OTP first' };
+      return { success: false, error: 'No OTP session found. Please request a new OTP.' };
     }
-    
+
     const result = await window.confirmationResult.confirm(code);
-    
-    if (window.recaptchaVerifier) {
-      try { window.recaptchaVerifier.clear(); } catch (e) {}
-      window.recaptchaVerifier = null;
-    }
-    
+    // Don't clear reCAPTCHA here - keep it for potential resend if user tries another flow
+    console.log('[Firebase] OTP verified successfully');
     return { success: true, user: result.user };
   } catch (error) {
-    console.error('Verify Error:', error.code);
-    
-    let errorMessage = 'Invalid OTP';
+    console.error('[Firebase] Verify Error:', error.code, error.message);
+
+    let errorMessage = 'Invalid OTP. Please check and try again.';
     if (error.code === 'auth/invalid-verification-code') {
-      errorMessage = 'Wrong OTP code';
+      errorMessage = 'Wrong OTP code. Please check and try again.';
     } else if (error.code === 'auth/code-expired') {
-      errorMessage = 'OTP expired. Request new one.';
+      errorMessage = 'OTP has expired. Please click Resend OTP to get a new code.';
+    } else if (error.code === 'auth/session-expired') {
+      errorMessage = 'Session expired. Please click Resend OTP.';
     }
-    
+
     return { success: false, error: errorMessage };
   }
 };
@@ -160,7 +190,7 @@ export const saveUserToFirestore = async (uid, userData, role) => {
     });
     return { success: true };
   } catch (error) {
-    console.error('Firestore error:', error);
+    console.error('[Firebase] Firestore save error:', error);
     return { success: false, error: error.message };
   }
 };
@@ -176,6 +206,12 @@ export const registerNewClient = async (clientData) => {
   } catch (error) {
     return { success: false, error: error.message };
   }
+};
+
+// Legacy export for backward compatibility
+export const setupRecaptcha = (containerId) => {
+  getOrCreateRecaptcha(containerId);
+  return window.recaptchaVerifier;
 };
 
 export default app;

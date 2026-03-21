@@ -65,9 +65,8 @@ const SignIn = ({ onLogin }) => {
     setLoading(true);
     setOtp('');
     try {
-      // Reset recaptcha for resend
       window.confirmationResult = null;
-      const result = await sendOTP(mobile);
+      const result = await sendOTP(mobile, true); // true = isResend
       if (result.success) {
         toast.success('New OTP sent!');
         setResendTimer(30);
@@ -75,7 +74,7 @@ const SignIn = ({ onLogin }) => {
         toast.error(result.error || 'Failed to resend OTP');
       }
     } catch (error) {
-      toast.error('Failed to resend OTP');
+      toast.error('Failed to resend OTP. Please refresh the page.');
     } finally {
       setLoading(false);
     }
