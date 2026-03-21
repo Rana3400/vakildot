@@ -14,6 +14,7 @@ import json
 import firebase_admin
 from firebase_admin import firestore
 import razorpay
+from agora_token_builder import RtcTokenBuilder
 
 router = APIRouter(prefix="/api/live", tags=["Live Consultation"])
 
@@ -452,12 +453,20 @@ async def start_session(data: StartSession):
 
 @router.get("/agora-token")
 async def get_agora_token(channel_name: str, uid: int = 0):
-    """Get Agora credentials with RTC token"""
+    """Get Agora credentials with proper RTC token"""
     if not AGORA_APP_ID or not AGORA_APP_CERTIFICATE:
         return {"error": "Agora not configured", "app_id": AGORA_APP_ID}
     
     try:
-        token = build_agora_token(AGORA_APP_ID, AGORA_APP_CERTIFICATE, channel_name, uid)
+        # Use official Agora token builder
+        role = 1  # Role_Publisher
+        privilege_expire_ts = int(time.time()) + 3600  # 1 hour
+        
+        token = RtcTokenBuilder.buildTokenWithUid(
+            AGORA_APP_ID, AGORA_APP_CERTIFICATE, channel_name, uid, role, privilege_expire_ts
+        )
+        
+        print(f"Agora token generated for channel: {channel_name}, uid: {uid}")
         return {
             "app_id": AGORA_APP_ID,
             "channel": channel_name,
@@ -473,20 +482,6 @@ async def get_agora_token(channel_name: str, uid: int = 0):
             "token": None,
             "error": str(e)
         }
-
-def build_agora_token(app_id, app_certificate, channel_name, uid, expiry_seconds=3600):
-    """Build Agora RTC token using HMAC"""
-    ts = int(time.time()) + expiry_seconds
-    salt = int(time.time())
-    
-    msg = f"{app_id}{channel_name}{uid}{ts}{salt}"
-    signature = hmac.new(
-        app_certificate.encode('utf-8'),
-        msg.encode('utf-8'),
-        hashlib.sha256
-    ).hexdigest()
-    
-    return f"006{app_id}{signature}{ts}{salt}{uid}"
 
 # ============= RAZORPAY ENDPOINTS =============
 

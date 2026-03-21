@@ -145,7 +145,18 @@ const ConsultationRoom = () => {
 
     } catch (e) {
       console.error('Call start error:', e);
-      toast.error('Failed to start call: ' + (e.message || 'Unknown error'));
+      let errorMsg = 'Unknown error';
+      if (e.message) {
+        errorMsg = e.message;
+        if (e.message.includes('vendor key') || e.message.includes('appid')) {
+          errorMsg = 'Agora App ID is invalid or inactive. Please check your Agora Console.';
+        } else if (e.message.includes('GATEWAY_SERVER')) {
+          errorMsg = 'Cannot connect to video server. Please check your Agora configuration.';
+        } else if (e.message.includes('permission') || e.message.includes('NotAllowed')) {
+          errorMsg = 'Camera/Microphone permission denied. Please allow access.';
+        }
+      }
+      toast.error('Failed to start call: ' + errorMsg);
       leaveChannel();
     }
   };
