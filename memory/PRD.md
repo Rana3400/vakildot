@@ -3,45 +3,40 @@
 ## Original Problem Statement
 Build a comprehensive lawyer management application named "VakilDot" - a real-time legal consultation marketplace (like AstroTalk) where clients connect with live lawyers for pay-per-minute video consultations.
 
-## Core Vision
-An open marketplace for clients to find and connect with any available live lawyer for pay-per-minute video consultations.
-
 ## Tech Stack
 - **Frontend:** React, TailwindCSS, Shadcn UI
 - **Backend:** FastAPI (Python)
 - **Database:** Firestore (Firebase)
 - **Auth:** Firebase Phone OTP + Custom JWT
-- **Video:** Agora SDK
+- **Video:** Agora SDK (official agora-token-builder)
 - **Payments:** Razorpay (LIVE keys)
 - **Deployment:** PWA-enabled
 
-## Key Features
-- Role-Based System: Lawyer and Client roles with distinct dashboards
-- Live Consultation Marketplace: Homepage shows online lawyers
-- Pay-Per-Minute Billing: ₹20/min rate, 66/34 (Lawyer/Platform) split
-- Wallet System: Razorpay LIVE for recharges, Firestore for balance
-- Video Calls: Agora SDK integration
-- PWA: Installable on mobile devices
-
 ## What's Been Implemented
 - Full auth flow (signup/signin) with Firebase Phone OTP
-- Lawyer & Client onboarding with state/court selection
+- Lawyer & Client onboarding with state/court selection (36 states/UTs)
 - Live marketplace showing online lawyers
 - Wallet system with Razorpay LIVE integration
 - Lawyer dashboard with earnings & withdrawal feature
 - Client dashboard as open marketplace
 - Mobile-responsive UI with PWA support
-- State-wise court selection system (36 states/UTs)
+- Lazy loading for 17+ pages (React.lazy/Suspense)
 
-## Bug Fixes (Latest - March 2026)
-1. **Login Failed (P0):** Fixed - Backend signin now checks both `mobile` and `phone` fields across `lawyers` and `clients` collections. Register endpoints store both fields for consistency.
-2. **State/UT Dropdown (P0):** Fixed - Added proper error handling and logging. API confirmed working with 36+ states.
-3. **Live Lawyers Not Showing (P0):** Fixed - Added proper error handling. API and frontend confirmed working.
+## Bug Fixes (March 2026)
+
+### Session 1 - Backend Auth & UI Fixes
+1. **Login Failed (P0):** Backend signin checks both `mobile` and `phone` fields across `lawyers` and `clients` collections
+2. **State/UT Dropdown (P0):** Added proper error handling, verified working with 36 states
+3. **Live Lawyers Not Showing (P0):** Fixed silent error handling, verified on desktop & mobile
+
+### Session 2 - OTP, Agora & Performance
+4. **OTP/Resend OTP Fails (P0):** Complete rewrite of firebase.js reCAPTCHA management - creates once, force-recreates on resend with `isResend` flag
+5. **Agora Video Call Fails (P0):** Replaced custom HMAC token builder with official `agora-token-builder` SDK (139 char proper tokens)
+6. **Slow Performance (P2):** Added React.lazy/Suspense lazy loading for 17 non-critical pages
 
 ## Pending Issues
-- Agora video call end-to-end testing (P1)
+- End-to-end video call testing with real users (depends on Agora App ID being active)
 - Client signup flow full verification (P1)
-- Site performance optimization (P2)
 
 ## Upcoming Tasks
 - AI Agent/Chatbot for client enquiries (P1)
@@ -60,8 +55,9 @@ An open marketplace for clients to find and connect with any available live lawy
 - POST /api/auth/register - Registers lawyers
 - POST /api/auth/register-client - Registers clients
 - GET /api/live/lawyers/live - Fetches online lawyers
-- GET /api/live/filters/states - Returns all states/UTs
+- GET /api/live/filters/states - Returns all 36 states/UTs
 - GET /api/live/filters/courts/{state} - Returns grouped courts
+- GET /api/live/agora-token - Generates proper Agora RTC tokens
 - POST /api/live/razorpay/create-order - Creates payment order
 - POST /api/live/razorpay/verify - Verifies payment
 
