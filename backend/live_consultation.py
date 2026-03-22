@@ -15,6 +15,7 @@ import firebase_admin
 from firebase_admin import firestore
 import razorpay
 from agora_token_builder import RtcTokenBuilder
+import httpx  # 🔔 NEW: For making HTTP requests to notification API
 
 router = APIRouter(prefix="/api/live", tags=["Live Consultation"])
 
@@ -41,6 +42,7 @@ class StartSession(BaseModel):
     client_id: str
     lawyer_id: str
     channel_name: str
+    client_name: Optional[str] = None  # 🔔 NEW: Optional client name
 
 class LawyerStatus(BaseModel):
     lawyer_id: str
@@ -440,8 +442,37 @@ async def get_lawyer_earnings(lawyer_id: str):
 
 @router.post("/session/start")
 async def start_session(data: StartSession):
-    """Start a consultation session"""
+    """Start a consultation session and notify lawyer"""
     session_id = f"session_{int(time.time())}_{data.client_id[:8]}"
+    
+    # 🔔 NEW: Get client name from database
+    client_name = data.client_name or "Client"
+    try:
+        client_doc = db.collection('clients').document(data.client_id).get()
+        if client_doc.exists:
+            client_data = client_doc.to_dict()
+            client_name = client_data.get('name', client_name)
+    except Exception as e:
+        print(f"Failed to fetch client name: {e}")
+    
+    # 🔔 NEW: Send incoming call notification to lawyer
+    try:
+        async with httpx.AsyncClient() as client:
+            notification_response = await client.post(
+                "http://localhost:8001/api/notifications/incoming-call",
+                json={
+                    "lawyer_id": data.lawyer_id,
+                    "client_id": data.client_id,
+                    "client_name": client_name,
+                    "session_id": session_id,
+                    "channel_name": data.channel_name
+                },
+                timeout=5.0
+            )
+            print(f"✅ Incoming call notification sent: {notification_response.json()}")
+    except Exception as e:
+        print(f"⚠️ Failed to send incoming call notification: {e}")
+        # Don't fail the session start if notification fails
     
     return {
         "success": True,

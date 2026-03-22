@@ -90,7 +90,7 @@ const ConsultationRoom = () => {
       await axios.post(`${API}/calls/start?session_id=${newSessionId}&client_id=${user.id}&client_name=${user.name}&lawyer_id=${lawyerId}&lawyer_name=${lawyer.name}&channel_name=${channelName}&rate_per_minute=${lawyer.rate_per_minute}`);
 
       await axios.post(`${API}/live/session/start`, {
-        client_id: user.id, lawyer_id: lawyerId, channel_name: channelName
+        client_id: user.id, lawyer_id: lawyerId, channel_name: channelName, client_name: user.name || 'Client'
       });
 
       // Initialize Agora

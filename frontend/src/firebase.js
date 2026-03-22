@@ -9,6 +9,8 @@ import {
   addDoc, 
   serverTimestamp 
 } from 'firebase/firestore';
+// 🔔 NEW: Firebase Messaging for Push Notifications
+import { getMessaging } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCP_CM8lmBY_X42AyrpbJ8IX29cX0U6sDE",
@@ -22,6 +24,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const firestore = getFirestore(app);
+
+// 🔔 NEW: Initialize Firebase Messaging
+let messaging = null;
+try {
+  messaging = getMessaging(app);
+  console.log('✅ Firebase Messaging initialized');
+} catch (error) {
+  console.warn('⚠️ Firebase Messaging not available:', error.message);
+}
+export { messaging };
 
 console.log('Firebase Initialized for VakilDot');
 
@@ -106,6 +118,11 @@ export const sendOTP = async (phoneNumber, isResend = false) => {
     }
 
     console.log(`[Firebase] ${isResend ? 'Resending' : 'Sending'} OTP to:`, cleanPhone);
+
+    // 🆕 FIXED: Clear old confirmation result before new OTP request
+    if (isResend && window.confirmationResult) {
+      window.confirmationResult = null;
+    }
 
     // For resend, force create a fresh reCAPTCHA (old one is used up)
     let appVerifier;

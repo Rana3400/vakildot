@@ -49,6 +49,8 @@ class LawyerRegister(BaseModel):
     court: str = ""
     lawyer_type: str = ""
     chamber_number: str = ""
+    state: str = ""
+    firebase_uid: str = ""
 
 class ClientCreate(BaseModel):
     name: str
@@ -143,42 +145,111 @@ async def root():
 @api_router.post("/auth/check-existing")
 async def check_existing(data: dict):
     mobile = data.get('mobile')
+    firebase_uid = data.get('firebase_uid', '')
     if not mobile:
         raise HTTPException(status_code=400, detail="Mobile required")
-    # Check both 'mobile' and 'phone' fields across both collections
+    
+    # Check by Firebase UID first (fastest)
+    if firebase_uid:
+        for coll in ['lawyers', 'clients']:
+            doc = db.collection(coll).document(firebase_uid).get()
+            if doc.exists:
+                user_data = doc.to_dict()
+                return {"exists": True, "role": user_data.get('user_role', user_data.get('role', 'lawyer'))}
+    
+    # Check by mobile/phone fields
     for collection_name in ['lawyers', 'clients']:
         for field_name in ['mobile', 'phone']:
             try:
                 docs = list(db.collection(collection_name).where(field_name, '==', mobile).limit(1).stream())
                 if docs:
-                    return {"exists": True}
+                    user_data = docs[0].to_dict()
+                    return {"exists": True, "role": user_data.get('user_role', user_data.get('role', 'lawyer'))}
             except Exception:
                 pass
     return {"exists": False}
 
 @api_router.post("/auth/register")
 async def register(data: LawyerRegister):
-    # Check both 'mobile' and 'phone' fields
+    # Check if user already exists by mobile/phone
     for field_name in ['mobile', 'phone']:
         docs = list(db.collection('lawyers').where(field_name, '==', data.mobile).limit(1).stream())
         if len(docs) > 0:
-            raise HTTPException(status_code=400, detail="User already exists")
+            # User exists - return their data instead of erroring
+            existing = docs[0].to_dict()
+            existing['id'] = docs[0].id
+            logger.info(f"[REGISTER] User already exists: {existing.get('name')} ({docs[0].id})")
+            return {"success": True, "token": create_token(docs[0].id), "user": existing}
     
-    user_id = str(uuid.uuid4())
+    # Also check by Firebase UID if provided
+    if data.firebase_uid:
+        existing_doc = db.collection('lawyers').document(data.firebase_uid).get()
+        if existing_doc.exists:
+            existing = existing_doc.to_dict()
+            existing['id'] = data.firebase_uid
+            # Update mobile/phone if missing
+            updates = {}
+            if not existing.get('mobile'):
+                updates['mobile'] = data.mobile
+            if not existing.get('phone'):
+                updates['phone'] = data.mobile
+            if updates:
+                db.collection('lawyers').document(data.firebase_uid).update(updates)
+                existing.update(updates)
+            logger.info(f"[REGISTER] Firebase UID doc exists: {existing.get('name')} ({data.firebase_uid})")
+            return {"success": True, "token": create_token(data.firebase_uid), "user": existing}
+    
+    # Create new user - use Firebase UID as doc ID if provided, else UUID
+    user_id = data.firebase_uid if data.firebase_uid else str(uuid.uuid4())
     user_dict = data.model_dump()
-    user_dict.update({"id": user_id, "user_role": "lawyer", "phone": data.mobile, "created_at": datetime.now(timezone.utc).isoformat()})
+    user_dict.update({
+        "id": user_id,
+        "uid": user_id,
+        "user_role": "lawyer",
+        "role": "lawyer",
+        "phone": data.mobile,
+        "mobile": data.mobile,
+        "rate_per_minute": 20.0,
+        "is_live": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    # Remove firebase_uid from stored data (it's the doc ID)
+    user_dict.pop('firebase_uid', None)
+    
     db.collection('lawyers').document(user_id).set(user_dict)
+    logger.info(f"[REGISTER] New lawyer created: {data.name} ({user_id})")
     return {"success": True, "token": create_token(user_id), "user": user_dict}
 
 @api_router.post("/auth/signin")
 async def signin(data: dict):
     mobile = data.get('mobile')
+    firebase_uid = data.get('firebase_uid', '')
+    
     if not mobile:
         raise HTTPException(status_code=400, detail="Mobile required")
     
-    logger.info(f"[SIGNIN] Attempting signin for mobile: {mobile}")
+    logger.info(f"[SIGNIN] Attempting signin for mobile: {mobile}, firebase_uid: {firebase_uid[:10] if firebase_uid else 'none'}")
     
-    # Search strategy: check both 'mobile' and 'phone' fields across lawyers and clients
+    # Strategy 1: Direct lookup by Firebase UID (fastest, most reliable)
+    if firebase_uid:
+        for collection_name in ['lawyers', 'clients']:
+            doc = db.collection(collection_name).document(firebase_uid).get()
+            if doc.exists:
+                user = doc.to_dict()
+                user['id'] = doc.id
+                if not user.get('user_role'):
+                    user['user_role'] = 'client' if collection_name == 'clients' else 'lawyer'
+                # Ensure mobile/phone fields are set
+                if not user.get('mobile'):
+                    db.collection(collection_name).document(firebase_uid).update({'mobile': mobile})
+                    user['mobile'] = mobile
+                if not user.get('phone'):
+                    db.collection(collection_name).document(firebase_uid).update({'phone': mobile})
+                    user['phone'] = mobile
+                logger.info(f"[SIGNIN] Found by Firebase UID in {collection_name}: {user.get('name', 'unknown')}")
+                return {"success": True, "token": create_token(doc.id), "user": user}
+    
+    # Strategy 2: Search by mobile/phone fields
     for collection_name in ['lawyers', 'clients']:
         for field_name in ['mobile', 'phone']:
             try:
@@ -186,15 +257,13 @@ async def signin(data: dict):
                 if docs:
                     user = docs[0].to_dict()
                     user['id'] = docs[0].id
-                    # Ensure user_role is set
                     if not user.get('user_role'):
                         user['user_role'] = 'client' if collection_name == 'clients' else 'lawyer'
-                    # Ensure mobile field exists for future lookups
                     if not user.get('mobile') and user.get('phone'):
                         user['mobile'] = user['phone']
                         db.collection(collection_name).document(docs[0].id).update({'mobile': mobile})
-                    logger.info(f"[SIGNIN] Found user in {collection_name}/{field_name}: {user.get('name', 'unknown')}")
-                    return {"success": True, "token": create_token(user['id']), "user": user}
+                    logger.info(f"[SIGNIN] Found by {field_name} in {collection_name}: {user.get('name', 'unknown')}")
+                    return {"success": True, "token": create_token(docs[0].id), "user": user}
             except Exception as e:
                 logger.warning(f"[SIGNIN] Error searching {collection_name}/{field_name}: {e}")
     
@@ -205,22 +274,78 @@ async def signin(data: dict):
 async def register_client(data: dict):
     mobile = data.get('mobile')
     name = data.get('name')
-    # Check both 'mobile' and 'phone' fields across both collections
+    firebase_uid = data.get('firebase_uid', '')
+    
+    # Check if user already exists
     for collection_name in ['lawyers', 'clients']:
         for field_name in ['mobile', 'phone']:
             docs = list(db.collection(collection_name).where(field_name, '==', mobile).limit(1).stream())
             if len(docs) > 0:
-                raise HTTPException(status_code=400, detail="User already exists")
+                existing = docs[0].to_dict()
+                existing['id'] = docs[0].id
+                logger.info(f"[REGISTER-CLIENT] User already exists: {existing.get('name')} ({docs[0].id})")
+                return {"success": True, "token": create_token(docs[0].id), "user": existing}
     
-    user_id = str(uuid.uuid4())
-    user_dict = {"id": user_id, "mobile": mobile, "phone": mobile, "name": name, "user_role": "client", "created_at": datetime.now(timezone.utc).isoformat()}
+    # Also check by Firebase UID
+    if firebase_uid:
+        for coll in ['clients', 'lawyers']:
+            existing_doc = db.collection(coll).document(firebase_uid).get()
+            if existing_doc.exists:
+                existing = existing_doc.to_dict()
+                existing['id'] = firebase_uid
+                return {"success": True, "token": create_token(firebase_uid), "user": existing}
+    
+    # Create new client - use Firebase UID as doc ID if provided
+    user_id = firebase_uid if firebase_uid else str(uuid.uuid4())
+    user_dict = {
+        "id": user_id, "uid": user_id,
+        "mobile": mobile, "phone": mobile,
+        "name": name, "user_role": "client", "role": "client",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
     db.collection('clients').document(user_id).set(user_dict)
+    logger.info(f"[REGISTER-CLIENT] New client created: {name} ({user_id})")
     return {"success": True, "token": create_token(user_id), "user": user_dict}
 
 # Profile
 @api_router.get("/profile")
 async def get_profile(user=Depends(get_current_user)):
     return user
+
+# ========== CALL NOTIFICATIONS ==========
+@api_router.get("/notifications/active-call/{lawyer_id}")
+async def get_active_call(lawyer_id: str):
+    """Check for pending incoming calls for a lawyer (polling endpoint)"""
+    try:
+        doc = db.collection('call_notifications').document(f"{lawyer_id}_active").get()
+        if doc.exists:
+            data = doc.to_dict()
+            if data.get('status') == 'pending':
+                return {"has_call": True, "call": data}
+        return {"has_call": False}
+    except Exception:
+        return {"has_call": False}
+
+@api_router.post("/notifications/call-action")
+async def call_action(data: dict):
+    """Lawyer accepts or rejects incoming call"""
+    lawyer_id = data.get('lawyer_id')
+    action = data.get('action', 'reject')
+    
+    if not lawyer_id:
+        raise HTTPException(status_code=400, detail="lawyer_id required")
+    
+    doc_ref = db.collection('call_notifications').document(f"{lawyer_id}_active")
+    doc = doc_ref.get()
+    
+    if doc.exists:
+        call_data = doc.to_dict()
+        call_data['status'] = 'accepted' if action == 'accept' else 'rejected'
+        call_data['responded_at'] = datetime.now(timezone.utc).isoformat()
+        doc_ref.set(call_data)
+        return {"success": True, "action": action, "call": call_data}
+    
+    return {"success": False, "message": "No pending call"}
 
 @api_router.put("/profile")
 async def update_profile(data: dict, user=Depends(get_current_user)):

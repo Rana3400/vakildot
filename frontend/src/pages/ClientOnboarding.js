@@ -103,11 +103,13 @@ const ClientOnboarding = ({ onComplete }) => {
         return;
       }
 
-      // Register via backend API (stores in clients collection)
+      // Register via backend API with Firebase UID as doc ID
+      const firebaseUser = verifyResult.user;
       const response = await axios.post(`${API}/auth/register-client`, {
         name: formData.name,
         mobile: formData.mobile,
-        email: formData.email || ''
+        email: formData.email || '',
+        firebase_uid: firebaseUser.uid
       });
 
       if (response.data.success) {

@@ -104,7 +104,11 @@ const SignIn = ({ onLogin }) => {
       }
 
       console.log('[SignIn] OTP verified, calling signin API for mobile:', mobile);
-      const response = await axios.post(`${API}/auth/signin`, { mobile });
+      const firebaseUser = verifyResult.user;
+      const response = await axios.post(`${API}/auth/signin`, { 
+        mobile, 
+        firebase_uid: firebaseUser ? firebaseUser.uid : '' 
+      });
       console.log('[SignIn] API response:', response.data);
       
       if (!response.data.success) {

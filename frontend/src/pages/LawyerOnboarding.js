@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { sendOTP, verifyOTP, saveUserToFirestore } from '@/firebase';
+import { sendOTP, verifyOTP } from '@/firebase';
 import SimpleCaptcha from '@/components/SimpleCaptcha';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -35,14 +35,37 @@ const LawyerOnboarding = ({ onComplete }) => {
   const [courtGroups, setCourtGroups] = useState({});
   const [resendTimer, setResendTimer] = useState(0);
 
+  // 🆕 ENHANCED: Fetch states with better error handling and logging
   useEffect(() => {
-    axios.get(`${API}/live/filters/states`)
-      .then(res => {
+    const fetchStates = async () => {
+      const apiUrl = `${API}/live/filters/states`;
+      console.log('[LawyerOnboarding] 🔍 Fetching states from:', apiUrl);
+      console.log('[LawyerOnboarding] 📡 Backend URL:', BACKEND_URL);
+      
+      try {
+        const res = await axios.get(apiUrl);
+        console.log('[LawyerOnboarding] ✅ API Response:', res.data);
+        
         const stateList = res.data.states || [];
-        console.log('[LawyerOnboarding] Fetched states:', stateList.length);
-        setStates(stateList);
-      })
-      .catch(e => console.error('[LawyerOnboarding] Failed to fetch states:', e.message));
+        console.log('[LawyerOnboarding] 📊 Total states received:', stateList.length);
+        console.log('[LawyerOnboarding] 📋 States list:', stateList);
+        
+        if (stateList.length === 0) {
+          console.warn('[LawyerOnboarding] ⚠️ WARNING: States array is empty!');
+          toast.error('Unable to load states. Please refresh the page.');
+        } else {
+          setStates(stateList);
+          toast.success(`Loaded ${stateList.length} states successfully!`);
+        }
+      } catch (e) {
+        console.error('[LawyerOnboarding] ❌ Failed to fetch states:', e.message);
+        console.error('[LawyerOnboarding] ❌ Full error:', e);
+        console.error('[LawyerOnboarding] ❌ Error response:', e.response?.data);
+        toast.error('Failed to load states. Please check your connection and try again.');
+      }
+    };
+
+    fetchStates();
   }, []);
 
   useEffect(() => {
@@ -52,14 +75,37 @@ const LawyerOnboarding = ({ onComplete }) => {
     }
   }, [resendTimer]);
 
+  // 🆕 ENHANCED: Handle state change with better logging
   const handleStateChange = async (state) => {
+    console.log('[LawyerOnboarding] 🏛️ State selected:', state);
     setFormData(prev => ({ ...prev, state, court: '' }));
+    
     try {
-      const res = await axios.get(`${API}/live/filters/courts/${encodeURIComponent(state)}`);
-      console.log('[LawyerOnboarding] Fetched courts for', state, ':', Object.keys(res.data.grouped || {}));
-      setCourtGroups(res.data.grouped || {});
+      const apiUrl = `${API}/live/filters/courts/${encodeURIComponent(state)}`;
+      console.log('[LawyerOnboarding] 🔍 Fetching courts from:', apiUrl);
+      
+      const res = await axios.get(apiUrl);
+      console.log('[LawyerOnboarding] ✅ Courts API Response:', res.data);
+      
+      const grouped = res.data.grouped || {};
+      console.log('[LawyerOnboarding] 📊 Court groups:', Object.keys(grouped));
+      console.log('[LawyerOnboarding] 📋 Full court data:', grouped);
+      
+      if (Object.keys(grouped).length === 0) {
+        console.warn('[LawyerOnboarding] ⚠️ WARNING: No courts found for state:', state);
+        toast.warning(`No courts data available for ${state}`);
+      } else {
+        const totalCourts = Object.values(grouped).reduce((sum, courts) => sum + courts.length, 0);
+        console.log('[LawyerOnboarding] ✅ Total courts loaded:', totalCourts);
+        toast.success(`Loaded ${totalCourts} courts for ${state}`);
+      }
+      
+      setCourtGroups(grouped);
     } catch (e) {
-      console.error('[LawyerOnboarding] Failed to fetch courts:', e.message);
+      console.error('[LawyerOnboarding] ❌ Failed to fetch courts:', e.message);
+      console.error('[LawyerOnboarding] ❌ Full error:', e);
+      console.error('[LawyerOnboarding] ❌ Error response:', e.response?.data);
+      toast.error(`Failed to load courts for ${state}`);
       setCourtGroups({});
     }
   };
@@ -136,24 +182,19 @@ const LawyerOnboarding = ({ onComplete }) => {
       }
 
       const firebaseUser = verifyResult.user;
-      const checkResponse = await axios.post(`${API}/auth/check-existing`, { mobile: formData.mobile });
       
-      if (checkResponse.data.exists) {
-        toast.error('Account already exists. Please sign in instead.');
-        setTimeout(() => navigate('/signin'), 2000);
+      // Pass firebase_uid to backend - single source of truth, no duplicate docs
+      const response = await axios.post(`${API}/auth/register`, {
+        ...formData,
+        firebase_uid: firebaseUser.uid,
+        practice_areas: [formData.practice_field],
+        courts: [formData.court]
+      });
+      
+      if (!response.data.success) {
+        toast.error('Registration failed. Please try again.');
         return;
       }
-
-      await saveUserToFirestore(firebaseUser.uid, {
-        name: formData.name, email: formData.email, phone: formData.mobile,
-        mobile: formData.mobile,
-        practice_field: formData.practice_field, court: formData.court,
-        lawyer_type: formData.lawyer_type, chamber_number: formData.chamber_number
-      }, 'lawyer');
-
-      const response = await axios.post(`${API}/auth/register`, {
-        ...formData, practice_areas: [formData.practice_field], courts: [formData.court]
-      });
       
       toast.success('Registration successful!');
       onComplete(response.data.token, response.data.user);
@@ -230,12 +271,29 @@ const LawyerOnboarding = ({ onComplete }) => {
                       {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  {/* 🆕 DEBUG: Show states count */}
+                  {states.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ✅ {states.length} states loaded
+                    </p>
+                  )}
+                  {states.length === 0 && (
+                    <p className="text-xs text-red-500 mt-1">
+                      ⚠️ No states loaded. Check console for errors.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
                   <Label>Court *</Label>
-                  <Select value={formData.court} onValueChange={(value) => setFormData(prev => ({ ...prev, court: value }))} disabled={!formData.state}>
-                    <SelectTrigger><SelectValue placeholder={formData.state ? "Select your court" : "Select state first"} /></SelectTrigger>
+                  <Select 
+                    value={formData.court} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, court: value }))} 
+                    disabled={!formData.state}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={formData.state ? "Select your court" : "Select state first"} />
+                    </SelectTrigger>
                     <SelectContent className="max-h-[300px]">
                       {Object.entries(courtGroups).map(([group, courts]) => (
                         <SelectGroup key={group}>
@@ -245,6 +303,17 @@ const LawyerOnboarding = ({ onComplete }) => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* 🆕 DEBUG: Show court groups info */}
+                  {formData.state && Object.keys(courtGroups).length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ✅ {Object.keys(courtGroups).length} court categories loaded
+                    </p>
+                  )}
+                  {formData.state && Object.keys(courtGroups).length === 0 && (
+                    <p className="text-xs text-red-500 mt-1">
+                      ⚠️ No courts loaded. Check console for errors.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1">

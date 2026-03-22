@@ -33,6 +33,14 @@ class ScheduledNotification(BaseModel):
     scheduled_time: str  # ISO format
     notification_type: str  # hearing_reminder, payment, lawyer_online, message
 
+# 🔔 NEW: Incoming Call Model
+class IncomingCallNotification(BaseModel):
+    lawyer_id: str
+    client_id: str
+    client_name: str
+    session_id: str
+    channel_name: str
+
 # Store FCM Token
 @router.post("/register-token")
 async def register_fcm_token(data: FCMToken):
@@ -147,6 +155,46 @@ async def send_bulk_notification(user_ids: List[str], payload: NotificationPaylo
             total_failure += len(batch)
     
     return {"success": True, "sent": total_success, "failed": total_failure}
+
+# 🔔 NEW: Incoming Call Notification - THE MISSING PIECE!
+@router.post("/incoming-call")
+async def notify_incoming_call(data: IncomingCallNotification):
+    """Notify lawyer of incoming video call consultation"""
+    try:
+        # ALWAYS store in Firestore for polling (this is the primary mechanism)
+        db.collection('call_notifications').document(f"{data.lawyer_id}_active").set({
+            "lawyer_id": data.lawyer_id,
+            "client_id": data.client_id,
+            "client_name": data.client_name,
+            "session_id": data.session_id,
+            "channel_name": data.channel_name,
+            "type": "incoming_call",
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        print(f"[NOTIFICATION] Stored incoming call for lawyer {data.lawyer_id} from {data.client_name}")
+        
+        # Also try FCM push notification (bonus - works if token is registered)
+        try:
+            payload = NotificationPayload(
+                title=f"Incoming Call from {data.client_name}",
+                body="Tap to accept consultation call",
+                data={
+                    "type": "incoming_call",
+                    "client_id": data.client_id,
+                    "client_name": data.client_name,
+                    "session_id": data.session_id,
+                    "channel_name": data.channel_name
+                }
+            )
+            await send_notification(data.lawyer_id, payload)
+        except Exception as fcm_err:
+            print(f"[NOTIFICATION] FCM push failed (polling still works): {fcm_err}")
+        
+        return {"success": True, "message": "Call notification stored"}
+    except Exception as e:
+        print(f"[NOTIFICATION] Error: {e}")
+        return {"success": False, "error": str(e)}
 
 # Notification Types
 @router.post("/lawyer-online")

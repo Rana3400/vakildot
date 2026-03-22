@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, Users, Calendar, IndianRupee, AlertCircle, TrendingUp, Video, Gavel, Star } from 'lucide-react';
+import { Briefcase, Users, Calendar, IndianRupee, AlertCircle, TrendingUp, Video, Gavel, Star, Phone, PhoneOff } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,9 +23,11 @@ const LawyerDashboard = () => {
   const [isLive, setIsLive] = useState(false);
   const [savingLive, setSavingLive] = useState(false);
   const [lawyerWallet, setLawyerWallet] = useState(0);
+  
+  // 🔔 NEW: Incoming call notification state
+  const [incomingCall, setIncomingCall] = useState(null);
 
   useEffect(() => {
-    // Verify user is a lawyer
     if (user.user_role === 'client') {
       navigate('/client-dashboard');
       return;
@@ -35,6 +37,58 @@ const LawyerDashboard = () => {
     fetchLiveStatus();
     fetchLawyerWallet();
   }, []);
+
+  // Poll for incoming calls when lawyer is LIVE
+  useEffect(() => {
+    if (!isLive || !user.id) return;
+    
+    const pollForCalls = async () => {
+      try {
+        const res = await axios.get(`${API}/notifications/active-call/${user.id}`);
+        if (res.data.has_call && res.data.call) {
+          setIncomingCall(res.data.call);
+        }
+      } catch (e) {
+        // Silent fail - polling should not interrupt UX
+      }
+    };
+    
+    pollForCalls(); // Check immediately
+    const interval = setInterval(pollForCalls, 4000); // Poll every 4 seconds
+    return () => clearInterval(interval);
+  }, [isLive, user.id]);
+
+  const acceptCall = async () => {
+    if (incomingCall) {
+      try {
+        await axios.post(`${API}/notifications/call-action`, {
+          lawyer_id: user.id,
+          action: 'accept'
+        });
+      } catch (e) {}
+      toast.success('Connecting to call...');
+      navigate(`/consultation/${incomingCall.client_id}`, { 
+        state: { 
+          sessionId: incomingCall.session_id,
+          channelName: incomingCall.channel_name,
+          clientId: incomingCall.client_id,
+          clientName: incomingCall.client_name
+        } 
+      });
+      setIncomingCall(null);
+    }
+  };
+
+  const rejectCall = async () => {
+    try {
+      await axios.post(`${API}/notifications/call-action`, {
+        lawyer_id: user.id,
+        action: 'reject'
+      });
+    } catch (e) {}
+    toast.info('Call declined');
+    setIncomingCall(null);
+  };
 
   const fetchLawyerWallet = async () => {
     try {
@@ -116,6 +170,47 @@ const LawyerDashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* 🔔 NEW: Incoming Call Notification Popup */}
+      {incomingCall && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-in fade-in duration-300">
+          <Card className="w-96 shadow-2xl border-2 border-amber-500 animate-in zoom-in duration-300">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="h-20 w-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center animate-pulse">
+                    <Phone className="h-10 w-10 text-white" />
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-2xl font-bold text-foreground">📞 Incoming Call</h3>
+                  <p className="text-lg text-muted-foreground mt-2">{incomingCall.client_name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">wants to consult with you</p>
+                </div>
+                
+                <div className="flex gap-4 justify-center pt-4">
+                  <Button
+                    onClick={rejectCall}
+                    variant="destructive"
+                    size="lg"
+                    className="rounded-full h-14 w-14 p-0"
+                  >
+                    <PhoneOff className="h-6 w-6" />
+                  </Button>
+                  
+                  <Button
+                    onClick={acceptCall}
+                    className="rounded-full h-14 w-14 p-0 bg-green-600 hover:bg-green-700"
+                  >
+                    <Phone className="h-6 w-6" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div>
         <h1 className="text-4xl font-bold text-foreground mb-2">Lawyer Dashboard</h1>
         <p className="text-muted-foreground">Welcome back, {user?.name}! Manage your practice here.</p>

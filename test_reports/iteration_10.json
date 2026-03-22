@@ -1,0 +1,175 @@
+{
+  "summary": "Iteration 10 - Auth system rewrite and notification polling VERIFIED. Backend: 18/18 tests passed (100%). Frontend: All pages load correctly. Key fixes verified: (1) Register uses firebase_uid as doc ID, returns existing user if already registered (no 400 error), (2) Signin finds user by Firebase UID direct lookup AND mobile/phone field search, (3) Notification polling endpoint works correctly, (4) Incoming call notification storage and retrieval works, (5) LawyerOnboarding does NOT have saveUserToFirestore, (6) All pages pass firebase_uid to backend.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter10_auth_notifications.py",
+    "/app/test_reports/pytest/pytest_results_iter10.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PASS: server.py - register endpoint uses firebase_uid as doc ID (line 203)",
+    "PASS: server.py - register returns existing user if mobile already exists (lines 175-182)",
+    "PASS: server.py - register returns existing user if firebase_uid already exists (lines 185-200)",
+    "PASS: server.py - signin Strategy 1: Direct lookup by Firebase UID (lines 234-250)",
+    "PASS: server.py - signin Strategy 2: Search by mobile/phone fields (lines 253-268)",
+    "PASS: server.py - /api/notifications/active-call/{lawyer_id} polling endpoint (lines 316-327)",
+    "PASS: server.py - /api/notifications/call-action endpoint (lines 329-348)",
+    "PASS: push_notifications.py - /api/notifications/incoming-call stores to Firestore (lines 160-197)",
+    "PASS: LawyerOnboarding.js - NO saveUserToFirestore call (verified via grep)",
+    "PASS: LawyerOnboarding.js - passes firebase_uid to /api/auth/register (line 189)",
+    "PASS: SignIn.js - passes firebase_uid to /api/auth/signin (line 110)",
+    "PASS: ClientOnboarding.js - passes firebase_uid to /api/auth/register-client (line 112)",
+    "PASS: LawyerDashboard.jsx - polls /api/notifications/active-call every 4s when LIVE (lines 45-58)",
+    "PASS: LawyerDashboard.jsx - shows incoming call notification popup (lines 174-212)",
+    "PASS: firebase.js - forceNewRecaptcha for resend OTP (lines 92-105)",
+    "PASS: App.js - 17 pages lazy loaded with React.lazy/Suspense"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter10_auth_notifications.py"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18 tests passed)",
+    "frontend": "100% (All pages load correctly, all features working)"
+  },
+  "test_credentials": {
+    "test_user_vijay": {
+      "mobile": "8427939650",
+      "firebase_uid": "k6jB13w5n8T8GMhL57HPhnJKGUo1",
+      "name": "Vijay"
+    },
+    "test_user_puneet": {
+      "mobile": "6284589325",
+      "firebase_uid": "56WXTxZMSiazrtsQeyn1VdXncPr2",
+      "name": "Puneet Owner"
+    }
+  },
+  "seed_data_creation": "None - used existing user data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 10 - Auth system rewrite verified. Register uses firebase_uid as doc ID and returns existing user if already registered. Signin uses both Firebase UID direct lookup AND mobile/phone field search. Notification polling works at /api/notifications/active-call/{lawyer_id}. Incoming call storage at /api/notifications/incoming-call. LawyerDashboard polls every 4s when LIVE. All 18 backend tests pass. All pages work on desktop and mobile.",
+  "features_tested": {
+    "auth_register": {
+      "status": "PASS",
+      "details": [
+        "POST /api/auth/register returns existing user if mobile already exists",
+        "POST /api/auth/register returns existing user if firebase_uid already exists",
+        "Uses firebase_uid as doc ID for new users",
+        "No 400 error for duplicate registration"
+      ]
+    },
+    "auth_signin": {
+      "status": "PASS",
+      "details": [
+        "POST /api/auth/signin finds user by Firebase UID direct lookup",
+        "POST /api/auth/signin finds user by mobile field without firebase_uid",
+        "Returns success=false for nonexistent user"
+      ]
+    },
+    "auth_register_client": {
+      "status": "PASS",
+      "details": [
+        "POST /api/auth/register-client accepts firebase_uid",
+        "Uses firebase_uid as doc ID for new clients"
+      ]
+    },
+    "notification_polling": {
+      "status": "PASS",
+      "details": [
+        "GET /api/notifications/active-call/{lawyer_id} returns has_call: false when no pending call",
+        "POST /api/notifications/call-action handles no pending call",
+        "POST /api/notifications/incoming-call stores notification to Firestore",
+        "Stored notification can be polled via active-call endpoint"
+      ]
+    },
+    "filters_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/filters/states returns 36+ states",
+        "GET /api/live/filters/courts/Delhi returns grouped courts",
+        "GET /api/live/filters/courts/Punjab returns Punjab courts"
+      ]
+    },
+    "agora_token": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/agora-token returns valid token (139+ chars)",
+        "Uses official agora-token-builder SDK"
+      ]
+    },
+    "live_lawyers": {
+      "status": "PASS",
+      "details": [
+        "GET /api/live/lawyers/live returns live lawyers",
+        "Returns 3 lawyers online"
+      ]
+    },
+    "homepage_desktop": {
+      "status": "PASS",
+      "details": [
+        "VakilDot branding visible",
+        "Join as Lawyer/Client cards visible",
+        "3 Lawyers Online Now badge visible",
+        "Live Legal Consultations section visible",
+        "Join Live Stream button visible",
+        "LIVE badges on lawyer cards"
+      ]
+    },
+    "homepage_mobile": {
+      "status": "PASS",
+      "details": [
+        "Mobile Sign In button visible",
+        "Hamburger menu visible",
+        "Join cards visible",
+        "Live Now section with 3 Online badge",
+        "Puneet Anand lawyer card with LIVE and VERIFIED badges"
+      ]
+    },
+    "signin_page": {
+      "status": "PASS",
+      "details": [
+        "Sign In form loads",
+        "Mobile input with data-testid visible",
+        "Security Check CAPTCHA visible",
+        "Send OTP button visible",
+        "reCAPTCHA container present"
+      ]
+    },
+    "lawyer_onboarding": {
+      "status": "PASS",
+      "details": [
+        "Lawyer Sign Up form loads",
+        "State/UT dropdown shows 36 states",
+        "National (Supreme Court / Tribunals) option visible",
+        "Court dropdown loads after state selection",
+        "NO saveUserToFirestore call (verified)",
+        "Passes firebase_uid to backend"
+      ]
+    },
+    "client_onboarding": {
+      "status": "PASS",
+      "details": [
+        "Join as Client page loads",
+        "Name, Mobile (+91), Email fields visible",
+        "Security Verification CAPTCHA visible",
+        "Passes firebase_uid to backend"
+      ]
+    },
+    "lawyer_dashboard_polling": {
+      "status": "PASS (code review)",
+      "details": [
+        "Polls /api/notifications/active-call/{user.id} every 4 seconds when LIVE",
+        "Shows incoming call notification popup",
+        "Accept/Reject call functionality implemented"
+      ]
+    }
+  },
+  "mocked_apis_note": "NONE - All integrations use LIVE credentials: Firebase Firestore, Razorpay live keys, Agora real credentials"
+}
