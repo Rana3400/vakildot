@@ -26,6 +26,7 @@ const ConsultationRoom = lazy(() => import('@/pages/ConsultationRoom'));
 const AssetRecovery = lazy(() => import('@/pages/AssetRecovery'));
 const AdminPanel = lazy(() => import('@/pages/AdminPanel'));
 const CallHistory = lazy(() => import('@/pages/CallHistory'));
+const DailyTasks = lazy(() => import('@/pages/DailyTasks'));
 
 import PWAInstallBanner from '@/components/PWAInstallBanner';
 
@@ -105,6 +106,7 @@ function App() {
             <Route path="cases/:caseId" element={<CaseDetail userRole={userRole} />} />
             <Route path="wallet" element={<Wallet />} />
             <Route path="call-history" element={<CallHistory />} />
+            <Route path="daily-tasks" element={isClient ? <Navigate to="/client-dashboard" /> : <DailyTasks />} />
             <Route path="consultation/:lawyerId" element={<ConsultationRoom />} />
             <Route path="settings" element={<Settings user={user} />} />
             <Route path="clients" element={isClient ? <Navigate to="/client-dashboard" /> : <Clients />} />

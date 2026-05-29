@@ -751,6 +751,126 @@ async def get_asset_leads(user=Depends(get_current_user)):
     docs = db.collection('asset_recovery_leads').stream()
     return [doc.to_dict() for doc in docs]
 
+# ========== DAILY TASKS / CASE DIARY ==========
+
+@api_router.post("/tasks")
+async def create_task(data: dict, user=Depends(get_current_user)):
+    """Create a new daily task / hearing entry"""
+    task_id = str(uuid.uuid4())
+    task = {
+        "id": task_id,
+        "lawyer_id": user['id'],
+        "case_name": data.get('case_name', ''),
+        "case_number": data.get('case_number', ''),
+        "court_name": data.get('court_name', ''),
+        "judge_name": data.get('judge_name', ''),
+        "hearing_date": data.get('hearing_date', ''),
+        "hearing_time": data.get('hearing_time', ''),
+        "task_type": data.get('task_type', 'hearing'),  # hearing, filing, meeting, other
+        "notes": data.get('notes', ''),
+        "status": data.get('status', 'pending'),  # pending, completed, cancelled
+        "priority": data.get('priority', 'medium'),  # low, medium, high
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    db.collection('daily_tasks').document(task_id).set(task)
+    return {"success": True, "task": task}
+
+@api_router.get("/tasks")
+async def get_tasks(user=Depends(get_current_user), date: str = None, status: str = None):
+    """Get tasks for a lawyer, optionally filtered by date and status"""
+    query = db.collection('daily_tasks').where('lawyer_id', '==', user['id'])
+    
+    docs = list(query.stream())
+    tasks = []
+    for doc in docs:
+        task = doc.to_dict()
+        task['id'] = doc.id
+        # Filter by date if provided
+        if date and task.get('hearing_date') != date:
+            continue
+        # Filter by status if provided
+        if status and task.get('status') != status:
+            continue
+        tasks.append(task)
+    
+    # Sort by hearing_date, then hearing_time
+    tasks.sort(key=lambda t: (t.get('hearing_date', ''), t.get('hearing_time', '')))
+    return {"tasks": tasks, "total": len(tasks)}
+
+@api_router.get("/tasks/today-summary")
+async def get_today_summary(user=Depends(get_current_user)):
+    """Get summary of today's tasks for morning notification"""
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    
+    query = db.collection('daily_tasks').where('lawyer_id', '==', user['id'])
+    docs = list(query.stream())
+    
+    today_tasks = []
+    upcoming_tasks = []
+    for doc in docs:
+        task = doc.to_dict()
+        task['id'] = doc.id
+        if task.get('hearing_date') == today:
+            today_tasks.append(task)
+        elif task.get('hearing_date', '') > today and task.get('status') != 'completed':
+            upcoming_tasks.append(task)
+    
+    today_tasks.sort(key=lambda t: t.get('hearing_time', ''))
+    upcoming_tasks.sort(key=lambda t: (t.get('hearing_date', ''), t.get('hearing_time', '')))
+    
+    pending_today = [t for t in today_tasks if t.get('status') == 'pending']
+    completed_today = [t for t in today_tasks if t.get('status') == 'completed']
+    
+    # Count by type
+    hearings_today = len([t for t in today_tasks if t.get('task_type') == 'hearing'])
+    filings_today = len([t for t in today_tasks if t.get('task_type') == 'filing'])
+    
+    return {
+        "date": today,
+        "total_today": len(today_tasks),
+        "pending_today": len(pending_today),
+        "completed_today": len(completed_today),
+        "hearings_today": hearings_today,
+        "filings_today": filings_today,
+        "today_tasks": today_tasks[:10],
+        "upcoming_tasks": upcoming_tasks[:5]
+    }
+
+@api_router.put("/tasks/{task_id}")
+async def update_task(task_id: str, data: dict, user=Depends(get_current_user)):
+    """Update a task"""
+    doc_ref = db.collection('daily_tasks').document(task_id)
+    doc = doc_ref.get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    existing = doc.to_dict()
+    if existing.get('lawyer_id') != user['id']:
+        raise HTTPException(status_code=403, detail="Not your task")
+    
+    updates = {k: v for k, v in data.items() if k not in ['id', 'lawyer_id', 'created_at']}
+    updates['updated_at'] = datetime.now(timezone.utc).isoformat()
+    doc_ref.update(updates)
+    
+    existing.update(updates)
+    return {"success": True, "task": existing}
+
+@api_router.delete("/tasks/{task_id}")
+async def delete_task(task_id: str, user=Depends(get_current_user)):
+    """Delete a task"""
+    doc_ref = db.collection('daily_tasks').document(task_id)
+    doc = doc_ref.get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    existing = doc.to_dict()
+    if existing.get('lawyer_id') != user['id']:
+        raise HTTPException(status_code=403, detail="Not your task")
+    
+    doc_ref.delete()
+    return {"success": True, "message": "Task deleted"}
+
 app.include_router(api_router)
 
 if __name__ == "__main__":

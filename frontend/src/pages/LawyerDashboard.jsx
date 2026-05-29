@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, Users, Calendar, IndianRupee, AlertCircle, TrendingUp, Video, Gavel, Star, Phone, PhoneOff } from 'lucide-react';
+import { Briefcase, Users, Calendar, IndianRupee, AlertCircle, TrendingUp, Video, Gavel, Star, Phone, PhoneOff, CalendarDays, ClipboardList } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,8 +23,9 @@ const LawyerDashboard = () => {
   const [isLive, setIsLive] = useState(false);
   const [savingLive, setSavingLive] = useState(false);
   const [lawyerWallet, setLawyerWallet] = useState(0);
+  const [todaySummary, setTodaySummary] = useState(null);
   
-  // 🔔 NEW: Incoming call notification state
+  // Incoming call notification state
   const [incomingCall, setIncomingCall] = useState(null);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ const LawyerDashboard = () => {
     fetchDashboardData();
     fetchLiveStatus();
     fetchLawyerWallet();
+    fetchTodaySummary();
   }, []);
 
   // Poll for incoming calls when lawyer is LIVE
@@ -96,6 +98,15 @@ const LawyerDashboard = () => {
       setLawyerWallet(res.data.balance || 0);
     } catch (e) {
       setLawyerWallet(0);
+    }
+  };
+
+  const fetchTodaySummary = async () => {
+    try {
+      const res = await axios.get(`${API}/tasks/today-summary`, { headers: { Authorization: `Bearer ${token}` } });
+      setTodaySummary(res.data);
+    } catch (e) {
+      setTodaySummary(null);
     }
   };
 
@@ -235,6 +246,35 @@ const LawyerDashboard = () => {
               {isLive && <Badge className="bg-red-500 text-white animate-pulse">LIVE NOW</Badge>}
               <Switch id="live-toggle" checked={isLive} onCheckedChange={toggleLiveStatus} disabled={savingLive} />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Daily Tasks Summary */}
+      <Card className="border-2 border-[#1a1a2e]/20 cursor-pointer hover:shadow-lg transition-shadow" 
+        onClick={() => navigate('/daily-tasks')} data-testid="daily-tasks-card">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-full bg-[#1a1a2e] flex items-center justify-center">
+                <ClipboardList className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Case Diary / Daily Tasks</h3>
+                {todaySummary && todaySummary.total_today > 0 ? (
+                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mt-1">
+                    <span className="font-medium text-orange-600">{todaySummary.pending_today} Pending Today</span>
+                    {todaySummary.hearings_today > 0 && <span>{todaySummary.hearings_today} Hearings</span>}
+                    <span className="text-green-600">{todaySummary.completed_today} Done</span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Manage your daily hearings, filings & tasks</p>
+                )}
+              </div>
+            </div>
+            <Button className="bg-[#1a1a2e] hover:bg-[#16213e] text-white" onClick={(e) => { e.stopPropagation(); navigate('/daily-tasks'); }}>
+              <CalendarDays className="h-4 w-4 mr-2" /> Open Diary
+            </Button>
           </div>
         </CardContent>
       </Card>
